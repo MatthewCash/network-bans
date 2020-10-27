@@ -56,7 +56,7 @@ public class DatabaseManager implements Closeable {
             stmt.execute();
             connection.close();
         } catch (SQLException e) {
-            PluginLogger.getLogger("NetworkBan").severe("Database error occured while creating bans table");
+            PluginLogger.getLogger("NetworkBan").severe("Database error occurred while creating bans table");
             e.printStackTrace();
         }
     }
