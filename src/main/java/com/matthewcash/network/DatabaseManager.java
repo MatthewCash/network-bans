@@ -13,14 +13,14 @@ import net.md_5.bungee.api.plugin.PluginLogger;
 
 public class DatabaseManager implements Closeable {
 
-    static final String username = "bans";
-    static final String password = "bans";
-    static final String url = "jdbc:mysql://172.18.0.1:3306/bans";
+    static final String username = ConfigManager.getConfig().getString("database.username");
+    static final String password = ConfigManager.getConfig().getString("database.password");
+    static final String url = ConfigManager.getConfig().getString("database.url");
 
     private final HikariDataSource dataSource;
 
     public DatabaseManager() throws IOException, SQLException, PropertyVetoException {
-        this.dataSource = new HikariDataSource();
+        dataSource = new HikariDataSource();
 
         dataSource.setJdbcUrl(url);
         dataSource.setUsername(username);
@@ -56,7 +56,7 @@ public class DatabaseManager implements Closeable {
             stmt.execute();
             connection.close();
         } catch (SQLException e) {
-            PluginLogger.getLogger("NetworkBan").severe("Database error occured while creating bans table");
+            PluginLogger.getLogger("NetworkBan").severe("Database error occurred while creating bans table");
             e.printStackTrace();
         }
     }

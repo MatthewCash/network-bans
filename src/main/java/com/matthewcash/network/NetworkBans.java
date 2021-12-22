@@ -1,12 +1,14 @@
 package com.matthewcash.network;
 
 import com.matthewcash.network.commands.UnbanCommand;
+import com.matthewcash.network.commands.UnbanIpCommand;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 
 import com.matthewcash.network.commands.BanCommand;
+import com.matthewcash.network.commands.BanIpCommand;
 import com.matthewcash.network.commands.CheckCommand;
 
 import net.md_5.bungee.api.plugin.Plugin;
@@ -29,6 +31,13 @@ public class NetworkBans extends Plugin {
         plugin = this;
 
         try {
+            ConfigManager.loadConfig();
+        } catch (IOException e) {
+            getLogger().severe("Error occured loading config file!");
+            e.printStackTrace();
+        }
+
+        try {
             databaseManager = new DatabaseManager();
         } catch (IOException | SQLException | PropertyVetoException e) {
             getLogger().severe("Error while occured initializing database pool!");
@@ -41,6 +50,8 @@ public class NetworkBans extends Plugin {
         getProxy().getPluginManager().registerCommand(this, new BanCommand());
         getProxy().getPluginManager().registerCommand(this, new UnbanCommand());
         getProxy().getPluginManager().registerCommand(this, new CheckCommand());
+        getProxy().getPluginManager().registerCommand(this, new BanIpCommand());
+        getProxy().getPluginManager().registerCommand(this, new UnbanIpCommand());
 
         getLogger().info("Enabled NetworkBans!");
     }
