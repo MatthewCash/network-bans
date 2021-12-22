@@ -71,10 +71,10 @@ public class CheckCommand extends Command implements TabExecutor {
                 try {
                     ban = BanManager.getBan(player);
                 } catch (SQLException e) {
-                    PluginLogger.getLogger("NetworkBan")
-                            .severe("Error occured while checking ban for " + player.username);
+                    PluginLogger.getLogger("NetworkBans")
+                            .severe("Error occurred while checking ban for " + player.username);
                     sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                            .append(" An error occured while checking ban for " + player.username + "!")
+                            .append(" An error occurred while checking ban for " + player.username + "!")
                             .color(ChatColor.RED).create());
                     e.printStackTrace();
                     return;

@@ -75,10 +75,10 @@ public class BanCommand extends Command implements TabExecutor {
                         return;
                     }
                 } catch (SQLException e) {
-                    PluginLogger.getLogger("NetworkBan")
-                            .severe("Error occured while checking ban for " + player.username);
+                    PluginLogger.getLogger("NetworkBans")
+                            .severe("Error occurred while checking ban for " + player.username);
                     sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                            .append(" An error occured while checking ban for " + player.username + "!")
+                            .append(" An error occurred while checking ban for " + player.username + "!")
                             .color(ChatColor.RED).create());
                     e.printStackTrace();
                     return;
@@ -104,9 +104,10 @@ public class BanCommand extends Command implements TabExecutor {
                     try {
                         BanManager.ban(player, reason);
                     } catch (SQLException e) {
-                        PluginLogger.getLogger("NetworkBan").severe("Error occured while banning " + player.username);
+                        PluginLogger.getLogger("NetworkBans").severe("Error occurred while banning " + player.username);
                         sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                                .append(" An error occured while banning " + player.username + "!").color(ChatColor.RED)
+                                .append(" An error occurred while banning " + player.username + "!")
+                                .color(ChatColor.RED)
                                 .create());
                         e.printStackTrace();
                         return;
@@ -123,9 +124,10 @@ public class BanCommand extends Command implements TabExecutor {
                     try {
                         BanManager.ban(player, reason, banUntil);
                     } catch (SQLException e) {
-                        PluginLogger.getLogger("NetworkBan").severe("Error occured while banning " + player.username);
+                        PluginLogger.getLogger("NetworkBans").severe("Error occured while banning " + player.username);
                         sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                                .append(" An error occured while banning " + player.username + "!").color(ChatColor.RED)
+                                .append(" An error occurred while banning " + player.username + "!")
+                                .color(ChatColor.RED)
                                 .create());
                         e.printStackTrace();
                         return;

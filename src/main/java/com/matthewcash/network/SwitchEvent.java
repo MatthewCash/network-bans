@@ -28,9 +28,11 @@ public class SwitchEvent implements Listener {
         try {
             ban = BanManager.getBan(banPlayer);
         } catch (SQLException e) {
-            PluginLogger.getLogger("NetworkBan").severe("Error occured while checking ban for " + banPlayer.username);
+            PluginLogger.getLogger("NetworkBans").severe("Error occurred while checking ban for " + banPlayer.username);
             e.printStackTrace();
         }
+
+        // Player is not banned, continue
         if (ban == null) {
             return;
         }

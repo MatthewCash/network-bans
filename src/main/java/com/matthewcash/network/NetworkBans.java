@@ -31,7 +31,7 @@ public class NetworkBans extends Plugin {
         try {
             databaseManager = new DatabaseManager();
         } catch (IOException | SQLException | PropertyVetoException e) {
-            getLogger().severe("Error while occured initializing database pool!");
+            getLogger().severe("Error while occurred initializing database pool!");
             e.printStackTrace();
         }
 
@@ -50,7 +50,7 @@ public class NetworkBans extends Plugin {
         try {
             databaseManager.close();
         } catch (IOException e) {
-            getLogger().severe("Error while occured deinitializing database pool!");
+            getLogger().severe("Error while occurred de-initializing database pool!");
             e.printStackTrace();
         }
 

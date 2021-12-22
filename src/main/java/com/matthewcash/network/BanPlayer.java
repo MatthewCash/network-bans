@@ -67,7 +67,7 @@ public class BanPlayer {
             return new BanPlayer(verifiedName, uuid);
 
         } catch (IOException e) {
-            PluginLogger.getLogger("NetworkBan").severe("HTTP Error getting UUID for " + providedName);
+            PluginLogger.getLogger("NetworkBans").severe("HTTP Error getting UUID for " + providedName);
             return null;
         }
     }
