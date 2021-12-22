@@ -187,7 +187,7 @@ public class BanCommand extends Command implements TabExecutor {
 
     private static TimeFormat parseDate(String input) throws Exception {
         String[] groups = input.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
-        Long multiplier = new Long(groups[0]);
+        Long multiplier = Long.parseLong(groups[0]);
         String timeString = groups[1];
 
         TimeFrame timeFrame = TimeFrame.valueOf(timeString);
