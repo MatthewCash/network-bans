@@ -1,7 +1,0 @@
-name: NetworkBans
-description: Network Bans Plugin for Matthew_Cash Network
-author: Matthew_Cash
-website: matthew-cash.com
-prefix: NetworkBans
-version: 1.0.0
-main: com.matthewcash.network.NetworkBans

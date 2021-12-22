@@ -17,17 +17,19 @@ import net.md_5.bungee.api.plugin.PluginLogger;
 public class BanPlayer {
     public final String username;
     public final UUID uuid;
+    public final String ipAddress;
 
-    private BanPlayer(String username, UUID uuid) {
+    private BanPlayer(String username, UUID uuid, String ipAddress) {
         this.username = username;
         this.uuid = uuid;
+        this.ipAddress = ipAddress;
     }
 
     public static BanPlayer getPlayer(String providedName) {
         // Get Connected Player
         ProxiedPlayer player = NetworkBans.getPlugin().getProxy().getPlayer(providedName);
         if (player != null) {
-            return new BanPlayer(player.getName(), player.getUniqueId());
+            return new BanPlayer(player.getName(), player.getUniqueId(), player.getSocketAddress().toString());
         }
 
         // Fallback to API for offline player
@@ -64,7 +66,7 @@ public class BanPlayer {
 
             UUID uuid = UUID.fromString(dashedUUID);
 
-            return new BanPlayer(verifiedName, uuid);
+            return new BanPlayer(verifiedName, uuid, null);
 
         } catch (IOException e) {
             PluginLogger.getLogger("NetworkBans").severe("HTTP Error getting UUID for " + providedName);

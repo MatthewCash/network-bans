@@ -1,5 +1,6 @@
 package com.matthewcash.network.commands;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.Collections;
@@ -11,6 +12,7 @@ import com.google.common.collect.Iterables;
 import com.matthewcash.network.Ban;
 import com.matthewcash.network.BanManager;
 import com.matthewcash.network.BanPlayer;
+import com.matthewcash.network.IpBanManager;
 import com.matthewcash.network.NetworkBans;
 
 import net.md_5.bungee.api.ChatColor;
@@ -57,49 +59,94 @@ public class CheckCommand extends Command implements TabExecutor {
         NetworkBans.getPlugin().getProxy().getScheduler().runAsync(NetworkBans.getPlugin(), new Runnable() {
             @Override
             public void run() {
-                // Lookup UUID
+                String ipAddress = null;
                 BanPlayer player = BanPlayer.getPlayer(args[0]);
 
-                if (player == null) {
+                if (player != null) {
+                    ProxiedPlayer proxiedPlayer = NetworkBans.getPlugin().getProxy().getPlayer(args[0]);
+                    if (proxiedPlayer != null) {
+                        ipAddress = IpBanManager.getIpFromPlayer(proxiedPlayer);
+                    }
+                } else {
+                    ipAddress = args[0];
+                }
+
+                if (ipAddress != null && ipAddress.length() - ipAddress.replace(".", "").length() < 3) {
+                    ipAddress = null;
+                }
+
+                if (player == null && ipAddress == null) {
                     sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                            .append(" Cannot find player " + args[0] + "!").color(ChatColor.RED).create());
+                            .append(" You must specify a valid player or IP address!").color(ChatColor.RED).create());
                     return;
                 }
 
                 // Check Ban
                 Ban ban = null;
-                try {
-                    ban = BanManager.getBan(player);
-                } catch (SQLException e) {
-                    PluginLogger.getLogger("NetworkBans")
-                            .severe("Error occurred while checking ban for " + player.username);
-                    sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                            .append(" An error occurred while checking ban for " + player.username + "!")
-                            .color(ChatColor.RED).create());
-                    e.printStackTrace();
-                    return;
+                if (player != null) {
+                    try {
+                        ban = BanManager.getBan(player);
+                    } catch (SQLException e) {
+                        PluginLogger.getLogger("NetworkBans")
+                                .severe("Error occurred while checking ban for " + player.username);
+                        sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
+                                .append(" An error occurred while checking ban for " + player.username + "!")
+                                .color(ChatColor.RED).create());
+                        e.printStackTrace();
+                        return;
+                    }
                 }
 
-                // Send message
-                if (ban == null) {
+                // Check IP-Ban
+                boolean isIpBanned = false;
+                if (ipAddress != null) {
+                    try {
+                        isIpBanned = IpBanManager.checkIp(ipAddress);
+                    } catch (IOException | RuntimeException e) {
+                        PluginLogger.getLogger("NetworkBans")
+                                .severe("Error occurred while checking IP-Ban for " + ipAddress);
+                        sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
+                                .append(" An error occurred while checking IP-Ban for " + ipAddress + "!")
+                                .color(ChatColor.RED).create());
+                        e.printStackTrace();
+                    }
+                }
+
+                // Not Banned
+                if (ban == null && isIpBanned == false) {
+                    String name = player != null ? player.username : ipAddress;
+
                     sender.sendMessage(new ComponentBuilder("✓").color(ChatColor.GREEN).bold(true)
-                            .append(" " + player.username).color(ChatColor.GOLD).bold(true).append(" is not banned!")
+                            .append(" " + name).color(ChatColor.GOLD).bold(true).append(" is not banned!")
                             .color(ChatColor.GRAY).create());
                     return;
                 }
-                ComponentBuilder banMessage = new ComponentBuilder("✖").color(ChatColor.RED)
-                        .append(" " + player.username).color(ChatColor.GOLD).bold(true).append(" has been ")
-                        .color(ChatColor.GRAY).append("BANNED").color(ChatColor.RED).bold(true).append(" with reason ")
-                        .color(ChatColor.GRAY).append(ban.reason).color(ChatColor.GOLD).bold(true).append("!")
-                        .color(ChatColor.GRAY);
 
-                if (ban.unbanTime == null) {
+                if (isIpBanned) {
+                    ComponentBuilder banMessage = new ComponentBuilder("✖").color(ChatColor.RED)
+                            .append(" " + ipAddress).color(ChatColor.GOLD).bold(true).append(" has been ")
+                            .color(ChatColor.GRAY).append("IP-BANNED").color(ChatColor.RED).bold(true).append("!")
+                            .color(ChatColor.GRAY);
                     sender.sendMessage(banMessage.create());
-                    return;
                 }
-                sender.sendMessage(banMessage.append(" until ").color(ChatColor.GRAY)
-                        .append(DateFormat.getDateTimeInstance().format(ban.unbanTime)).color(ChatColor.GOLD).bold(true)
-                        .append("!").color(ChatColor.GRAY).create());
+
+                if (ban != null) {
+                    ComponentBuilder banMessage = new ComponentBuilder("✖").color(ChatColor.RED)
+                            .append(" " + player.username).color(ChatColor.GOLD).bold(true).append(" has been ")
+                            .color(ChatColor.GRAY).append("BANNED").color(ChatColor.RED).bold(true)
+                            .append(" with reason ")
+                            .color(ChatColor.GRAY).append(ban.reason).color(ChatColor.GOLD).bold(true).append("!")
+                            .color(ChatColor.GRAY);
+
+                    if (ban.unbanTime == null) {
+                        sender.sendMessage(banMessage.create());
+                        return;
+                    }
+                    sender.sendMessage(banMessage.append(" until ").color(ChatColor.GRAY)
+                            .append(DateFormat.getDateTimeInstance().format(ban.unbanTime)).color(ChatColor.GOLD)
+                            .bold(true)
+                            .append("!").color(ChatColor.GRAY).create());
+                }
             }
         });
 
