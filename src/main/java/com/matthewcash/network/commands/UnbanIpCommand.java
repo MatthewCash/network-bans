@@ -58,7 +58,7 @@ public class UnbanIpCommand extends Command implements TabExecutor {
             ipAddress = args[0];
         }
 
-        if (ipAddress.length() - ipAddress.replace(".", "").length() < 3) {
+        if (!IpBanManager.isValidIpAddress(ipAddress)) {
             sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
                     .append(" You must specify an online valid player or IP address!").color(ChatColor.RED).create());
             return;

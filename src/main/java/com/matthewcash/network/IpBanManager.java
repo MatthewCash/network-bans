@@ -27,6 +27,10 @@ public class IpBanManager {
         return player.getSocketAddress().toString().split(":")[0].substring(1);
     }
 
+    public static boolean isValidIpAddress(String ipAddress) {
+        return ipAddress.matches("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+    }
+
     public static void ipBan(String ipAddress) throws ClientProtocolException, IOException {
         JsonObjectBuilder payloadJsonBuilder = Json.createObjectBuilder();
         payloadJsonBuilder.add("ban", ipAddress);

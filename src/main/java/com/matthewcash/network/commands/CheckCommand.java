@@ -71,7 +71,7 @@ public class CheckCommand extends Command implements TabExecutor {
                     ipAddress = args[0];
                 }
 
-                if (ipAddress != null && ipAddress.length() - ipAddress.replace(".", "").length() < 3) {
+                if (ipAddress != null && !IpBanManager.isValidIpAddress(ipAddress)) {
                     ipAddress = null;
                 }
 
