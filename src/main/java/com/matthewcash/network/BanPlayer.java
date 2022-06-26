@@ -4,15 +4,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.net.ssl.HttpsURLConnection;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.plugin.PluginLogger;
+import com.velocitypowered.api.proxy.Player;
 
 public class BanPlayer {
     public final String username;
@@ -27,9 +26,10 @@ public class BanPlayer {
 
     public static BanPlayer getPlayer(String providedName) {
         // Get Connected Player
-        ProxiedPlayer player = NetworkBans.getPlugin().getProxy().getPlayer(providedName);
-        if (player != null) {
-            return new BanPlayer(player.getName(), player.getUniqueId(), player.getSocketAddress().toString());
+        Optional<Player> player = NetworkBans.proxy.getPlayer(providedName);
+        if (player.isPresent()) {
+            return new BanPlayer(player.get().getUsername(), player.get().getUniqueId(),
+                player.get().getRemoteAddress().getAddress().toString());
         }
 
         // Fallback to API for offline player
@@ -57,7 +57,7 @@ public class BanPlayer {
             request.disconnect();
 
             // Parse JSON and UUID
-            JsonObject responseJSON = (JsonObject) new JsonParser().parse(response).getAsJsonObject();
+            JsonObject responseJSON = JsonParser.parseString(response).getAsJsonObject();
 
             String verifiedName = responseJSON.get("name").getAsString();
 
@@ -69,7 +69,7 @@ public class BanPlayer {
             return new BanPlayer(verifiedName, uuid, null);
 
         } catch (IOException e) {
-            PluginLogger.getLogger("NetworkBans").severe("HTTP Error getting UUID for " + providedName);
+            NetworkBans.logger.error("HTTP Error getting UUID for " + providedName);
             return null;
         }
     }

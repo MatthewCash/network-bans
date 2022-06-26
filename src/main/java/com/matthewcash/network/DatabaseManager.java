@@ -9,19 +9,18 @@ import java.sql.SQLException;
 
 import com.zaxxer.hikari.HikariDataSource;
 
-import net.md_5.bungee.api.plugin.PluginLogger;
-
 public class DatabaseManager implements Closeable {
 
-    static final String username = ConfigManager.getConfig().getString("database.username");
-    static final String password = ConfigManager.getConfig().getString("database.password");
-    static final String url = ConfigManager.getConfig().getString("database.url");
+    static final String username = ConfigManager.config.get("database.username");
+    static final String password = ConfigManager.config.get("database.password");
+    static final String url = ConfigManager.config.get("database.url");
 
     private final HikariDataSource dataSource;
 
     public DatabaseManager() throws IOException, SQLException, PropertyVetoException {
         dataSource = new HikariDataSource();
 
+        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
         dataSource.setJdbcUrl(url);
         dataSource.setUsername(username);
         dataSource.setPassword(password);
@@ -56,7 +55,7 @@ public class DatabaseManager implements Closeable {
             stmt.execute();
             connection.close();
         } catch (SQLException e) {
-            PluginLogger.getLogger("NetworkBans").severe("Database error occurred while creating bans table");
+            NetworkBans.logger.error("Database error occurred while creating bans table");
             e.printStackTrace();
         }
     }

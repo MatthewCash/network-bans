@@ -1,0 +1,12 @@
+{
+    "id": "network-bans",
+    "name": "NetworkBans",
+    "version": "2.0.0",
+    "description": "Network Bans",
+    "url": "https://github.com/MatthewCash/network-bans",
+    "authors": [
+        "Matthew_Cash"
+    ],
+    "dependencies": [],
+    "main": "com.matthewcash.network.NetworkBans"
+}

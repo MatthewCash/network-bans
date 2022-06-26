@@ -2,91 +2,78 @@ package com.matthewcash.network.commands;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import com.matthewcash.network.IpBanManager;
 import com.matthewcash.network.NetworkBans;
+import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.proxy.Player;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.plugin.Command;
-import net.md_5.bungee.api.plugin.TabExecutor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
-public class BanIpCommand extends Command implements TabExecutor {
-    public BanIpCommand() {
-        super("banip", "mcash.admin.banip", "ipban");
+public class BanIpCommand implements SimpleCommand {
+    @Override
+    public boolean hasPermission(final SimpleCommand.Invocation invocation) {
+        return invocation.source().hasPermission("mcash.networkbans.banip");
     }
 
     @Override
-    public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        if (args.length != 1) {
+    public List<String> suggest(final SimpleCommand.Invocation invocation) {
+        if (invocation.arguments().length > 1) {
             return Collections.emptyList();
         }
-        return Iterables
-                .transform(Iterables.filter(ProxyServer.getInstance().getPlayers(), new Predicate<ProxiedPlayer>() {
-                    @Override
-                    public boolean apply(ProxiedPlayer player) {
-                        return player.getName().toLowerCase().startsWith(args[0]);
-                    }
-                }), new Function<ProxiedPlayer, String>() {
-                    @Override
-                    public String apply(ProxiedPlayer player) {
-                        return player.getName();
-                    }
-                });
+
+        return NetworkBans.proxy.getAllPlayers().stream().map(player -> player.getUsername()).toList();
     }
 
     @Override
-    public void execute(CommandSender sender, String[] args) {
+    public void execute(final SimpleCommand.Invocation invocation) {
+        CommandSource source = invocation.source();
+        String[] args = invocation.arguments();
+
         if (args.length < 1) {
-            sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                    .append(" You must specify an online player or IP address!").color(ChatColor.RED).create());
+            source.sendMessage(MiniMessage.miniMessage()
+                .deserialize(
+                    "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player or IP address!</red>"));
             return;
         }
 
-        String ipAddress;
-
-        ProxiedPlayer player = ProxyServer.getInstance().getPlayer(args[0]);
-        if (player != null) {
-            ipAddress = IpBanManager.getIpFromPlayer(player);
-        } else {
-            ipAddress = args[0];
-        }
+        Optional<Player> player = NetworkBans.proxy.getPlayer(args[0]);
+        String ipAddress = player.isPresent() ? IpBanManager.getIpFromPlayer(player.get()) : args[0];
 
         if (!IpBanManager.isValidIpAddress(ipAddress)) {
-            sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                    .append(" You must specify an online player or IP address!").color(ChatColor.RED).create());
+            source.sendMessage(MiniMessage.miniMessage()
+                .deserialize(
+                    "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player or IP address!</red>"));
             return;
         }
 
-        NetworkBans.getPlugin().getProxy().getScheduler().runAsync(NetworkBans.getPlugin(), new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (IpBanManager.checkIp(ipAddress)) {
-                        sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                                .append(" IP Address " + ipAddress + " is already banned!").color(ChatColor.RED)
-                                .create());
-                        return;
-                    }
-
-                    IpBanManager.ipBan(ipAddress);
-                } catch (IOException | RuntimeException e) {
-                    sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                            .append(" An error occurred while IP-Banning " + ipAddress + "!").color(ChatColor.RED)
-                            .create());
+        NetworkBans.proxy.getScheduler().buildTask(NetworkBans.plugin, () -> {
+            try {
+                if (IpBanManager.checkIp(ipAddress)) {
+                    source.sendMessage(MiniMessage.miniMessage()
+                        .deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>IP Address <ip> is already banned!</red>",
+                            Placeholder.unparsed("ip", ipAddress)));
                     return;
                 }
 
-                sender.sendMessage(new ComponentBuilder("You have IP-Banned ").color(ChatColor.GRAY)
-                        .append(ipAddress).color(ChatColor.GOLD).bold(true).append("!")
-                        .color(ChatColor.GRAY).create());
+                IpBanManager.ipBan(ipAddress);
+            } catch (IOException | RuntimeException e) {
+                source.sendMessage(MiniMessage.miniMessage()
+                    .deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while IP-banning <ip>!</red>",
+                        Placeholder.unparsed("ip", ipAddress)));
+                return;
             }
-        });
+
+            source.sendMessage(MiniMessage.miniMessage()
+                .deserialize(
+                    "<gray>You have IP-banned <gold><bold><ip></bold></gold>!</gray>",
+                    Placeholder.unparsed("ip", ipAddress)));
+        }).schedule();
     }
 }

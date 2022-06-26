@@ -16,15 +16,14 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.plugin.PluginLogger;
+import com.velocitypowered.api.proxy.Player;
 
 public class IpBanManager {
-    private static final String apiPath = ConfigManager.getConfig().getString("ipban.api_url");
-    private static final String authToken = ConfigManager.getConfig().getString("ipban.auth_token");
+    private static final String apiPath = ConfigManager.config.get("ipban.api_url");
+    private static final String authToken = ConfigManager.config.get("ipban.auth_token");
 
-    public static String getIpFromPlayer(ProxiedPlayer player) {
-        return player.getSocketAddress().toString().split(":")[0].substring(1);
+    public static String getIpFromPlayer(Player player) {
+        return player.getRemoteAddress().getAddress().toString();
     }
 
     public static boolean isValidIpAddress(String ipAddress) {
@@ -49,7 +48,7 @@ public class IpBanManager {
         response = httpClient.execute(request);
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            PluginLogger.getLogger("NetworkBans").severe(response.getStatusLine().getReasonPhrase());
+            NetworkBans.logger.error(response.getStatusLine().getReasonPhrase());
             throw new RuntimeException("An error occurred while attempting to IP-Ban!");
         }
     }
@@ -72,7 +71,7 @@ public class IpBanManager {
         response = httpClient.execute(request);
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            PluginLogger.getLogger("NetworkBans").severe(response.getStatusLine().getReasonPhrase());
+            NetworkBans.logger.error(response.getStatusLine().getReasonPhrase());
             throw new RuntimeException("An error occurred while attempting to IP-UnBan!");
         }
     }
@@ -95,7 +94,7 @@ public class IpBanManager {
         response = httpClient.execute(request);
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            PluginLogger.getLogger("NetworkBans").severe(response.getStatusLine().getReasonPhrase());
+            NetworkBans.logger.error(response.getStatusLine().getReasonPhrase());
             throw new RuntimeException("An error occurred while checking for IP-Ban!");
         }
 

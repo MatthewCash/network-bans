@@ -1,0 +1,8 @@
+[database]
+username = ""
+password = ""
+url = "jdbc:mysql://"
+
+[ipban]
+api_url = "http://"
+auth_token = ""

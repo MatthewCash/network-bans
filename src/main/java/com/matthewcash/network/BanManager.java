@@ -9,7 +9,7 @@ import java.util.Date;
 public class BanManager {
 
     private static Connection getConnection() throws SQLException {
-        return NetworkBans.getDatabaseManager().getConnection();
+        return NetworkBans.databaseManager.getConnection();
     }
 
     public static Ban getBan(BanPlayer player) throws SQLException {

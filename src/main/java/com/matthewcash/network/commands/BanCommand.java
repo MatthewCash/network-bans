@@ -4,153 +4,141 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
+import java.util.List;
 
 import com.matthewcash.network.BanManager;
-import com.matthewcash.network.NetworkBans;
 import com.matthewcash.network.BanPlayer;
+import com.matthewcash.network.NetworkBans;
+import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.proxy.Player;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.plugin.Command;
-import net.md_5.bungee.api.plugin.PluginLogger;
-import net.md_5.bungee.api.plugin.TabExecutor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
-public class BanCommand extends Command implements TabExecutor {
-    public BanCommand() {
-        super("ban", "mcash.admin.ban", new String[0]);
+public class BanCommand implements SimpleCommand {
+    @Override
+    public boolean hasPermission(final SimpleCommand.Invocation invocation) {
+        return invocation.source().hasPermission("mcash.networkbans.ban");
     }
 
     @Override
-    public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        if (args.length != 1) {
+    public List<String> suggest(final SimpleCommand.Invocation invocation) {
+        if (invocation.arguments().length > 1) {
             return Collections.emptyList();
         }
-        return Iterables
-                .transform(Iterables.filter(ProxyServer.getInstance().getPlayers(), new Predicate<ProxiedPlayer>() {
-                    @Override
-                    public boolean apply(ProxiedPlayer player) {
-                        return player.getName().toLowerCase().startsWith(args[0]);
-                    }
-                }), new Function<ProxiedPlayer, String>() {
-                    @Override
-                    public String apply(ProxiedPlayer player) {
-                        return player.getName();
-                    }
-                });
+
+        return NetworkBans.proxy.getAllPlayers().stream().map(player -> player.getUsername()).toList();
     }
 
     @Override
-    public void execute(CommandSender sender, String[] args) {
+    public void execute(final SimpleCommand.Invocation invocation) {
+        CommandSource source = invocation.source();
+        String[] args = invocation.arguments();
+
         if (args.length < 1) {
-            sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                    .append(" You must specify a player!").color(ChatColor.RED).create());
+            source.sendMessage(MiniMessage.miniMessage()
+                .deserialize("<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player!</red>"));
             return;
         }
 
-        NetworkBans.getPlugin().getProxy().getScheduler().runAsync(NetworkBans.getPlugin(), new Runnable() {
-            @Override
-            public void run() {
-                // Lookup UUID
-                BanPlayer player = BanPlayer.getPlayer(args[0]);
+        NetworkBans.proxy.getScheduler().buildTask(NetworkBans.plugin, () -> {
+            // Lookup UUID
+            BanPlayer player = BanPlayer.getPlayer(args[0]);
 
-                if (player == null) {
-                    sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                            .append(" Cannot find player " + args[0] + "!").color(ChatColor.RED).create());
+            if (player == null) {
+                source.sendMessage(MiniMessage.miniMessage()
+                    .deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> could not be found!</red>",
+                        Placeholder.unparsed("player", args[0])));
+                return;
+            }
+
+            // Check if player is already banned
+            try {
+                if (BanManager.getBan(player) != null) {
+                    source.sendMessage(MiniMessage.miniMessage()
+                        .deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> is already banned!</red>",
+                            Placeholder.unparsed("player", player.username)));
                     return;
                 }
+            } catch (SQLException e) {
+                NetworkBans.logger.error("Error occurred while checking ban for " + player.username);
+                e.printStackTrace();
 
-                // Check if player is already banned
+                source.sendMessage(MiniMessage.miniMessage().deserialize(
+                    "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking ban for <username>!</red>",
+                    Placeholder.unparsed("username", player.username)));
+                return;
+            }
+
+            // Parse reason and time from command args
+            String reason;
+            TimeFormat timeFormat = null;
+
+            if (args.length < 2) {
+                reason = "No Reason Specified";
+            } else {
                 try {
-                    if (BanManager.getBan(player) != null) {
-                        sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                                .append(" Player " + player.username + " is already banned!").color(ChatColor.RED)
-                                .create());
-                        return;
-                    }
-                } catch (SQLException e) {
-                    PluginLogger.getLogger("NetworkBans")
-                            .severe("Error occurred while checking ban for " + player.username);
-                    sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                            .append(" An error occurred while checking ban for " + player.username + "!")
-                            .color(ChatColor.RED).create());
-                    e.printStackTrace();
-                    return;
-                }
-
-                // Parse reason and time from command args
-                String reason;
-                TimeFormat timeFormat = null;
-
-                if (args.length < 2) {
-                    reason = "No Reason Specified";
-                } else {
-                    try {
-                        timeFormat = parseDate(args[args.length - 1]);
-                        reason = arrayToString(Arrays.copyOfRange(args, 1, args.length - 1), " ");
-                    } catch (Exception e) {
-                        reason = arrayToString(Arrays.copyOfRange(args, 1, args.length), " ");
-                    }
-                }
-
-                // Ban the player
-                if (timeFormat == null) {
-                    try {
-                        BanManager.ban(player, reason);
-                    } catch (SQLException e) {
-                        PluginLogger.getLogger("NetworkBans").severe("Error occurred while banning " + player.username);
-                        sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                                .append(" An error occurred while banning " + player.username + "!")
-                                .color(ChatColor.RED)
-                                .create());
-                        e.printStackTrace();
-                        return;
-                    }
-
-                    // Send ban message to sender
-                    sender.sendMessage(new ComponentBuilder("You have banned ").color(ChatColor.GRAY)
-                            .append(player.username).color(ChatColor.GOLD).bold(true).append(" with reason ")
-                            .color(ChatColor.GRAY).append(reason).color(ChatColor.GOLD).bold(true).append("!")
-                            .color(ChatColor.GRAY).create());
-                } else {
-                    Date banUntil = new Date(new Date().getTime() + timeFormat.totalTime);
-
-                    try {
-                        BanManager.ban(player, reason, banUntil);
-                    } catch (SQLException e) {
-                        PluginLogger.getLogger("NetworkBans").severe("Error occurred while banning " + player.username);
-                        sender.sendMessage(new ComponentBuilder("ERROR").color(ChatColor.DARK_RED).bold(true)
-                                .append(" An error occurred while banning " + player.username + "!")
-                                .color(ChatColor.RED)
-                                .create());
-                        e.printStackTrace();
-                        return;
-                    }
-
-                    // Send ban message to sender
-                    sender.sendMessage(
-                            new ComponentBuilder("You have banned ").color(ChatColor.GRAY).append(player.username)
-                                    .color(ChatColor.GOLD).bold(true).append(" for ").color(ChatColor.GRAY)
-                                    .append(timeFormat.multiplier.toString() + " " + timeFormat.timeFormat)
-                                    .color(ChatColor.GOLD).bold(true).append(" with reason ").color(ChatColor.GRAY)
-                                    .append(reason).color(ChatColor.GOLD).bold(true).append("!").color(ChatColor.GRAY)
-                                    .create());
-                }
-
-                ProxiedPlayer networkPlayer = NetworkBans.getPlugin().getProxy().getPlayer(args[0]);
-
-                // Send player to hub
-                if (networkPlayer != null && !networkPlayer.getServer().getInfo().getName().equals("hub")) {
-                    networkPlayer.connect(NetworkBans.getPlugin().getProxy().getServers().get("hub"));
+                    timeFormat = parseDate(args[args.length - 1]);
+                    reason = arrayToString(Arrays.copyOfRange(args, 1, args.length - 1), " ");
+                } catch (Exception e) {
+                    reason = arrayToString(Arrays.copyOfRange(args, 1, args.length), " ");
                 }
             }
-        });
+
+            // Ban the player
+            if (timeFormat == null) {
+                try {
+                    BanManager.ban(player, reason);
+                } catch (SQLException e) {
+                    NetworkBans.logger.error("Error occurred while banning " + player.username);
+                    e.printStackTrace();
+
+                    source.sendMessage(MiniMessage.miniMessage().deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while banning <username>!</red>",
+                        Placeholder.unparsed("username", player.username)));
+                    return;
+                }
+
+                // Send ban message to sender
+                source.sendMessage(MiniMessage.miniMessage()
+                    .deserialize(
+                        "<gray>You have banned <gold><bold><player></bold></gold> with reason <gold><bold><reason></bold></gold>!</gray>",
+                        Placeholder.unparsed("ip", player.username), Placeholder.unparsed("reason", reason)));
+            } else {
+                Date banUntil = new Date(new Date().getTime() + timeFormat.totalTime);
+
+                try {
+                    BanManager.ban(player, reason, banUntil);
+                } catch (SQLException e) {
+                    NetworkBans.logger.error("Error occurred while banning " + player.username);
+                    e.printStackTrace();
+
+                    source.sendMessage(MiniMessage.miniMessage().deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while banning <username>!</red>",
+                        Placeholder.unparsed("username", player.username)));
+                    return;
+                }
+
+                // Send ban message to sender
+                source.sendMessage(MiniMessage.miniMessage()
+                    .deserialize(
+                        "<gray>You have banned <gold><bold><username></bold></gold> for <gold><bold><time></bold></gold> with reason <gold><bold><reason></bold></gold>!</gray>",
+                        Placeholder.unparsed("time", timeFormat.multiplier.toString() + " "
+                            + timeFormat.timeFormat),
+                        Placeholder.unparsed("username", player.username), Placeholder.unparsed("reason", reason)));
+            }
+
+            Player networkPlayer = NetworkBans.proxy.getPlayer(args[0]).get();
+
+                // Send player to hub
+            if (networkPlayer != null
+                && !networkPlayer.getCurrentServer().get().getServerInfo().getName().equals("hub")) {
+                networkPlayer.createConnectionRequest(NetworkBans.proxy.getServer("hub").get()).connect();
+            }
+        }).schedule();
 
     }
 
