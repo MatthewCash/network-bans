@@ -44,15 +44,6 @@ public class SwitchEvent {
 
         // Send ban message
 
-        // player.sendMessage(new ComponentBuilder("").create());
-        // player.sendMessage(new ComponentBuilder("You have been
-        // ").color(ChatColor.RED).bold(true).append("BANNED")
-        // .color(ChatColor.DARK_RED).bold(true).append(" and may no longer connect to
-        // this server!")
-        // .color(ChatColor.RED).bold(true).create());
-        // player.sendMessage(new ComponentBuilder(ban.reason).create());
-        // player.sendMessage(new ComponentBuilder("").create());
-
         player.sendMessage(MiniMessage.miniMessage()
             .deserialize(
                 "<newline><bold><red>You have been <dark_red>BANNED</dark_red> and may no longer connect to this server!</red></bold><newline><reason><newline>",

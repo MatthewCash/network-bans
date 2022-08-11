@@ -187,4 +187,5 @@ public class BanCommand implements SimpleCommand {
 
         return new TimeFormat(timeFormat, totalTime, multiplier);
     }
+
 }
