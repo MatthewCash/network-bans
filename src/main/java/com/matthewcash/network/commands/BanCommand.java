@@ -106,7 +106,8 @@ public class BanCommand implements SimpleCommand {
                 source.sendMessage(MiniMessage.miniMessage()
                     .deserialize(
                         "<gray>You have banned <gold><bold><player></bold></gold> with reason <gold><bold><reason></bold></gold>!</gray>",
-                        Placeholder.unparsed("ip", player.username), Placeholder.unparsed("reason", reason)));
+                        Placeholder.unparsed("player", player.username),
+                        Placeholder.unparsed("reason", reason)));
             } else {
                 Date banUntil = new Date(new Date().getTime() + timeFormat.totalTime);
 
