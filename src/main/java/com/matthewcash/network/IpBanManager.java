@@ -19,8 +19,10 @@ import org.apache.http.util.EntityUtils;
 import com.velocitypowered.api.proxy.Player;
 
 public class IpBanManager {
-    private static final String apiPath = ConfigManager.config.get("ipban.api_url");
-    private static final String authToken = ConfigManager.config.get("ipban.auth_token");
+    private static final String apiPath = ConfigManager.config
+        .get("ipban.api_url");
+    private static final String authToken = ConfigManager.config
+        .get("ipban.auth_token");
 
     public static String getIpFromPlayer(Player player) {
         return player.getRemoteAddress().getAddress().toString();
@@ -28,10 +30,13 @@ public class IpBanManager {
 
     public static boolean isValidIpAddress(String ipAddress) {
         return ipAddress
-            .matches("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+            .matches(
+                "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+            );
     }
 
-    public static void ipBan(String ipAddress) throws ClientProtocolException, IOException {
+    public static void ipBan(String ipAddress)
+        throws ClientProtocolException, IOException {
         JsonObjectBuilder payloadJsonBuilder = Json.createObjectBuilder();
         payloadJsonBuilder.add("ban", ipAddress);
         String rawJson = payloadJsonBuilder.build().toString();
@@ -49,12 +54,16 @@ public class IpBanManager {
         response = httpClient.execute(request);
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            NetworkBans.logger.error(response.getStatusLine().getReasonPhrase());
-            throw new RuntimeException("An error occurred while attempting to IP-Ban!");
+            NetworkBans.logger
+                .error(response.getStatusLine().getReasonPhrase());
+            throw new RuntimeException(
+                "An error occurred while attempting to IP-Ban!"
+            );
         }
     }
 
-    public static void ipUnBan(String ipAddress) throws ClientProtocolException, IOException {
+    public static void ipUnBan(String ipAddress)
+        throws ClientProtocolException, IOException {
         JsonObjectBuilder payloadJsonBuilder = Json.createObjectBuilder();
         payloadJsonBuilder.add("unban", ipAddress);
         String rawJson = payloadJsonBuilder.build().toString();
@@ -72,12 +81,16 @@ public class IpBanManager {
         response = httpClient.execute(request);
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            NetworkBans.logger.error(response.getStatusLine().getReasonPhrase());
-            throw new RuntimeException("An error occurred while attempting to IP-UnBan!");
+            NetworkBans.logger
+                .error(response.getStatusLine().getReasonPhrase());
+            throw new RuntimeException(
+                "An error occurred while attempting to IP-UnBan!"
+            );
         }
     }
 
-    public static boolean checkIp(String ipAddress) throws ClientProtocolException, IOException {
+    public static boolean checkIp(String ipAddress)
+        throws ClientProtocolException, IOException {
         JsonObjectBuilder payloadJsonBuilder = Json.createObjectBuilder();
         payloadJsonBuilder.add("check", ipAddress);
         String rawJson = payloadJsonBuilder.build().toString();
@@ -95,13 +108,17 @@ public class IpBanManager {
         response = httpClient.execute(request);
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            NetworkBans.logger.error(response.getStatusLine().getReasonPhrase());
-            throw new RuntimeException("An error occurred while checking for IP-Ban!");
+            NetworkBans.logger
+                .error(response.getStatusLine().getReasonPhrase());
+            throw new RuntimeException(
+                "An error occurred while checking for IP-Ban!"
+            );
         }
 
         String responseBody = EntityUtils.toString(response.getEntity());
 
-        JsonReader jsonReader = Json.createReader(new StringReader(responseBody));
+        JsonReader jsonReader = Json
+            .createReader(new StringReader(responseBody));
         JsonObject jsonMessage = jsonReader.readObject();
 
         return jsonMessage.getBoolean("isIpBanned");

@@ -5,8 +5,11 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 public class ConfigManager {
     public static CommentedFileConfig config = CommentedFileConfig
         .builder(NetworkBans.dataDirectory.resolve("config.toml").toFile())
-        .defaultData(NetworkBans.class.getResource(
-            "/config.toml"))
+        .defaultData(
+            NetworkBans.class.getResource(
+                "/config.toml"
+            )
+        )
         .autosave()
         .preserveInsertionOrder()
         .sync()

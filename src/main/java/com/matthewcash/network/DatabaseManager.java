@@ -11,13 +11,16 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public class DatabaseManager implements Closeable {
 
-    static final String username = ConfigManager.config.get("database.username");
-    static final String password = ConfigManager.config.get("database.password");
+    static final String username = ConfigManager.config
+        .get("database.username");
+    static final String password = ConfigManager.config
+        .get("database.password");
     static final String url = ConfigManager.config.get("database.url");
 
     private final HikariDataSource dataSource;
 
-    public DatabaseManager() throws IOException, SQLException, PropertyVetoException {
+    public DatabaseManager()
+        throws IOException, SQLException, PropertyVetoException {
         dataSource = new HikariDataSource();
 
         dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
@@ -51,11 +54,13 @@ public class DatabaseManager implements Closeable {
         try {
             Connection connection = this.getConnection();
             PreparedStatement stmt = connection.prepareStatement(
-                    "CREATE TABLE IF NOT EXISTS bans (uuid VARCHAR(36) NOT NULL, reason VARCHAR(1000) NOT NULL, banUntil BIGINT(19) UNSIGNED);");
+                "CREATE TABLE IF NOT EXISTS bans (uuid VARCHAR(36) NOT NULL, reason VARCHAR(1000) NOT NULL, banUntil BIGINT(19) UNSIGNED);"
+            );
             stmt.execute();
             connection.close();
         } catch (SQLException e) {
-            NetworkBans.logger.error("Database error occurred while creating bans table");
+            NetworkBans.logger
+                .error("Database error occurred while creating bans table");
             e.printStackTrace();
         }
     }

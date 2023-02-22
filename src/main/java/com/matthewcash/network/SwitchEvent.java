@@ -30,7 +30,9 @@ public class SwitchEvent {
         try {
             ban = BanManager.getBan(banPlayer);
         } catch (SQLException e) {
-            NetworkBans.logger.error("Error occurred while checking ban for " + banPlayer.username);
+            NetworkBans.logger.error(
+                "Error occurred while checking ban for " + banPlayer.username
+            );
             e.printStackTrace();
         }
 
@@ -44,10 +46,13 @@ public class SwitchEvent {
 
         // Send ban message
 
-        player.sendMessage(MiniMessage.miniMessage()
-            .deserialize(
-                "<newline><bold><red>You have been <dark_red>BANNED</dark_red> and may no longer connect to this server!</red></bold><newline><reason><newline>",
-                Placeholder.unparsed("reason", ban.reason)));
+        player.sendMessage(
+            MiniMessage.miniMessage()
+                .deserialize(
+                    "<newline><bold><red>You have been <dark_red>BANNED</dark_red> and may no longer connect to this server!</red></bold><newline><reason><newline>",
+                    Placeholder.unparsed("reason", ban.reason)
+                )
+        );
     }
 
 }

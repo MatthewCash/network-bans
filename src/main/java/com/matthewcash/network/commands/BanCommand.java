@@ -133,7 +133,7 @@ public class BanCommand implements SimpleCommand {
 
             Player networkPlayer = NetworkBans.proxy.getPlayer(args[0]).get();
 
-                // Send player to hub
+            // Send player to hub
             if (networkPlayer != null
                 && !networkPlayer.getCurrentServer().get().getServerInfo().getName().equals("hub")) {
                 networkPlayer.createConnectionRequest(NetworkBans.proxy.getServer("hub").get()).connect();
@@ -163,8 +163,8 @@ public class BanCommand implements SimpleCommand {
     }
 
     private static enum TimeFrame {
-        s(1000l, "seconds"), m(60000l, "minutes"), h(3600000l, "hours"), d(86400000l, "days"), w(604800000l, "weeks"),
-        mo(2629746000l, "months"), y(31556952000l, "years");
+        s(1000l, "seconds"), m(60000l, "minutes"), h(3600000l, "hours"), d(86400000l, "days"), w(604800000l,
+            "weeks"), mo(2629746000l, "months"), y(31556952000l, "years");
 
         private final Long totalTime;
         private final String timeFormat;

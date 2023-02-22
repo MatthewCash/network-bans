@@ -27,7 +27,8 @@ public class NetworkBans {
     public static DatabaseManager databaseManager;
 
     @Inject
-    public NetworkBans(ProxyServer proxy, Logger logger, @DataDirectory Path dataDirectory) {
+    public NetworkBans(ProxyServer proxy, Logger logger,
+        @DataDirectory Path dataDirectory) {
         NetworkBans.plugin = this;
         NetworkBans.proxy = proxy;
         NetworkBans.logger = logger;
@@ -49,11 +50,16 @@ public class NetworkBans {
 
         proxy.getEventManager().register(this, new SwitchEvent());
         proxy.getCommandManager().register("ban", new BanCommand(), "punish");
-        proxy.getCommandManager().register("unban", new UnbanCommand(), "pardon");
-        proxy.getCommandManager().register("check", new CheckCommand(), "checkban");
-        proxy.getCommandManager().register("banip", new BanIpCommand(), "ipban");
-        proxy.getCommandManager().register("unbanip", new UnbanIpCommand(), "unipban", "ipunban", "pardonip",
-            "ippardon");
+        proxy.getCommandManager()
+            .register("unban", new UnbanCommand(), "pardon");
+        proxy.getCommandManager()
+            .register("check", new CheckCommand(), "checkban");
+        proxy.getCommandManager()
+            .register("banip", new BanIpCommand(), "ipban");
+        proxy.getCommandManager().register(
+            "unbanip", new UnbanIpCommand(), "unipban", "ipunban", "pardonip",
+            "ippardon"
+        );
 
         logger.info("Enabled NetworkBans!");
     }
