@@ -26,7 +26,8 @@ public class BanIpCommand implements SimpleCommand {
             return Collections.emptyList();
         }
 
-        return NetworkBans.proxy.getAllPlayers().stream().map(player -> player.getUsername()).toList();
+        return NetworkBans.proxy.getAllPlayers().stream()
+            .map(player -> player.getUsername()).toList();
     }
 
     @Override
@@ -35,45 +36,62 @@ public class BanIpCommand implements SimpleCommand {
         String[] args = invocation.arguments();
 
         if (args.length < 1) {
-            source.sendMessage(MiniMessage.miniMessage()
-                .deserialize(
-                    "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player or IP address!</red>"));
+            source.sendMessage(
+                MiniMessage.miniMessage()
+                    .deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player or IP address!</red>"
+                    )
+            );
             return;
         }
 
         Optional<Player> player = NetworkBans.proxy.getPlayer(args[0]);
-        String ipAddress = player.isPresent() ? IpBanManager.getIpFromPlayer(player.get()) : args[0];
+        String ipAddress = player.isPresent()
+            ? IpBanManager.getIpFromPlayer(player.get())
+            : args[0];
 
         if (!IpBanManager.isValidIpAddress(ipAddress)) {
-            source.sendMessage(MiniMessage.miniMessage()
-                .deserialize(
-                    "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player or IP address!</red>"));
+            source.sendMessage(
+                MiniMessage.miniMessage()
+                    .deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player or IP address!</red>"
+                    )
+            );
             return;
         }
 
         NetworkBans.proxy.getScheduler().buildTask(NetworkBans.plugin, () -> {
             try {
                 if (IpBanManager.checkIp(ipAddress)) {
-                    source.sendMessage(MiniMessage.miniMessage()
-                        .deserialize(
-                            "<dark_red><bold>ERROR</bold></dark_red> <red>IP Address <ip> is already banned!</red>",
-                            Placeholder.unparsed("ip", ipAddress)));
+                    source.sendMessage(
+                        MiniMessage.miniMessage()
+                            .deserialize(
+                                "<dark_red><bold>ERROR</bold></dark_red> <red>IP Address <ip> is already banned!</red>",
+                                Placeholder.unparsed("ip", ipAddress)
+                            )
+                    );
                     return;
                 }
 
                 IpBanManager.ipBan(ipAddress);
             } catch (IOException | RuntimeException e) {
-                source.sendMessage(MiniMessage.miniMessage()
-                    .deserialize(
-                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while IP-banning <ip>!</red>",
-                        Placeholder.unparsed("ip", ipAddress)));
+                source.sendMessage(
+                    MiniMessage.miniMessage()
+                        .deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while IP-banning <ip>!</red>",
+                            Placeholder.unparsed("ip", ipAddress)
+                        )
+                );
                 return;
             }
 
-            source.sendMessage(MiniMessage.miniMessage()
-                .deserialize(
-                    "<gray>You have IP-banned <gold><bold><ip></bold></gold>!</gray>",
-                    Placeholder.unparsed("ip", ipAddress)));
+            source.sendMessage(
+                MiniMessage.miniMessage()
+                    .deserialize(
+                        "<gray>You have IP-banned <gold><bold><ip></bold></gold>!</gray>",
+                        Placeholder.unparsed("ip", ipAddress)
+                    )
+            );
         }).schedule();
     }
 }

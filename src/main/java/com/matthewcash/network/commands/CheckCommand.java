@@ -33,7 +33,8 @@ public class CheckCommand implements SimpleCommand {
             return Collections.emptyList();
         }
 
-        return NetworkBans.proxy.getAllPlayers().stream().map(player -> player.getUsername()).toList();
+        return NetworkBans.proxy.getAllPlayers().stream()
+            .map(player -> player.getUsername()).toList();
     }
 
     @Override
@@ -42,8 +43,12 @@ public class CheckCommand implements SimpleCommand {
         String[] args = invocation.arguments();
 
         if (args.length < 1) {
-            source.sendMessage(MiniMessage.miniMessage()
-                .deserialize("<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player!</red>"));
+            source.sendMessage(
+                MiniMessage.miniMessage()
+                    .deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player!</red>"
+                    )
+            );
             return;
         }
 
@@ -52,21 +57,27 @@ public class CheckCommand implements SimpleCommand {
             BanPlayer player = BanPlayer.getPlayer(args[0]);
 
             if (player != null) {
-                Optional<Player> proxiedPlayer = NetworkBans.proxy.getPlayer(args[0]);
+                Optional<Player> proxiedPlayer = NetworkBans.proxy
+                    .getPlayer(args[0]);
                 if (proxiedPlayer.isPresent()) {
-                    ipAddress = IpBanManager.getIpFromPlayer(proxiedPlayer.get());
+                    ipAddress = IpBanManager
+                        .getIpFromPlayer(proxiedPlayer.get());
                 }
             } else {
                 ipAddress = args[0];
             }
 
-            if (ipAddress != null && !IpBanManager.isValidIpAddress(ipAddress)) {
+            if (ipAddress != null
+                && !IpBanManager.isValidIpAddress(ipAddress)) {
                 ipAddress = null;
             }
 
             if (player == null && ipAddress == null) {
-                source.sendMessage(MiniMessage.miniMessage().deserialize(
-                    "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a valid player or IP address!</red>"));
+                source.sendMessage(
+                    MiniMessage.miniMessage().deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a valid player or IP address!</red>"
+                    )
+                );
                 return;
             }
 
@@ -76,10 +87,16 @@ public class CheckCommand implements SimpleCommand {
                 try {
                     ban = BanManager.getBan(player);
                 } catch (SQLException e) {
-                    NetworkBans.logger.error("Error occurred while checking ban for " + player.username);
-                    source.sendMessage(MiniMessage.miniMessage().deserialize(
-                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking ban for <username>!</red>",
-                        Placeholder.unparsed("username", player.username)));
+                    NetworkBans.logger.error(
+                        "Error occurred while checking ban for "
+                            + player.username
+                    );
+                    source.sendMessage(
+                        MiniMessage.miniMessage().deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking ban for <username>!</red>",
+                            Placeholder.unparsed("username", player.username)
+                        )
+                    );
                     e.printStackTrace();
                     return;
                 }
@@ -91,12 +108,17 @@ public class CheckCommand implements SimpleCommand {
                 try {
                     isIpBanned = IpBanManager.checkIp(ipAddress);
                 } catch (IOException | RuntimeException e) {
-                    NetworkBans.logger.error("Error occurred while checking IP-Ban for " + ipAddress);
+                    NetworkBans.logger.error(
+                        "Error occurred while checking IP-Ban for " + ipAddress
+                    );
                     e.printStackTrace();
 
-                    source.sendMessage(MiniMessage.miniMessage().deserialize(
-                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking IP-ban for <ip>!</red>",
-                        Placeholder.unparsed("ip", ipAddress)));
+                    source.sendMessage(
+                        MiniMessage.miniMessage().deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking IP-ban for <ip>!</red>",
+                            Placeholder.unparsed("ip", ipAddress)
+                        )
+                    );
                 }
             }
 
@@ -104,31 +126,53 @@ public class CheckCommand implements SimpleCommand {
             if (ban == null && isIpBanned == false) {
                 String name = player != null ? player.username : ipAddress;
 
-                source.sendMessage(MiniMessage.miniMessage()
-                    .deserialize("<bold><green>✓</green> <gold><name></gold></bold> <gray>is not banned</gray>",
-                        Placeholder.unparsed("name", name)));
+                source.sendMessage(
+                    MiniMessage.miniMessage()
+                        .deserialize(
+                            "<bold><green>✓</green> <gold><name></gold></bold> <gray>is not banned</gray>",
+                            Placeholder.unparsed("name", name)
+                        )
+                );
                 return;
             }
 
             if (isIpBanned) {
-                source.sendMessage(MiniMessage.miniMessage().deserialize(
-                    "<bold><red>✖</red> <gold><ip></gold></bold> <gray>has been <red><bold>IP-BANNED</bold></red>!</gray>",
-                    Placeholder.unparsed("ip", ipAddress)));
+                source.sendMessage(
+                    MiniMessage.miniMessage().deserialize(
+                        "<bold><red>✖</red> <gold><ip></gold></bold> <gray>has been <red><bold>IP-BANNED</bold></red>!</gray>",
+                        Placeholder.unparsed("ip", ipAddress)
+                    )
+                );
             }
 
             if (ban != null) {
                 Component banComponent = MiniMessage.miniMessage().deserialize(
                     "<bold><red>✖</red> <gold><username></gold></bold> <gray>has been <red><bold>BANNED</bold></red> with reason <gold><bold><reason></bold></gold></gray>",
-                    Placeholder.unparsed("username", player.username), Placeholder.unparsed("reason", ban.reason));
+                    Placeholder.unparsed("username", player.username),
+                    Placeholder.unparsed("reason", ban.reason)
+                );
 
                 if (ban.unbanTime == null) {
-                    source.sendMessage(banComponent.append(Component.text("!").color(NamedTextColor.GRAY)));
+                    source.sendMessage(
+                        banComponent.append(
+                            Component.text("!").color(NamedTextColor.GRAY)
+                        )
+                    );
                     return;
                 }
 
-                source.sendMessage(banComponent.append(MiniMessage.miniMessage().deserialize(
-                    "<gray> until <gold><bold><time></bold></gold>!</gray>", Placeholder.unparsed("time",
-                        DateFormat.getDateTimeInstance().format(ban.unbanTime)))));
+                source.sendMessage(
+                    banComponent.append(
+                        MiniMessage.miniMessage().deserialize(
+                            "<gray> until <gold><bold><time></bold></gold>!</gray>",
+                            Placeholder.unparsed(
+                                "time",
+                                DateFormat.getDateTimeInstance()
+                                    .format(ban.unbanTime)
+                            )
+                        )
+                    )
+                );
 
             }
         })

@@ -28,7 +28,8 @@ public class BanCommand implements SimpleCommand {
             return Collections.emptyList();
         }
 
-        return NetworkBans.proxy.getAllPlayers().stream().map(player -> player.getUsername()).toList();
+        return NetworkBans.proxy.getAllPlayers().stream()
+            .map(player -> player.getUsername()).toList();
     }
 
     @Override
@@ -37,8 +38,12 @@ public class BanCommand implements SimpleCommand {
         String[] args = invocation.arguments();
 
         if (args.length < 1) {
-            source.sendMessage(MiniMessage.miniMessage()
-                .deserialize("<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player!</red>"));
+            source.sendMessage(
+                MiniMessage.miniMessage()
+                    .deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player!</red>"
+                    )
+            );
             return;
         }
 
@@ -47,29 +52,40 @@ public class BanCommand implements SimpleCommand {
             BanPlayer player = BanPlayer.getPlayer(args[0]);
 
             if (player == null) {
-                source.sendMessage(MiniMessage.miniMessage()
-                    .deserialize(
-                        "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> could not be found!</red>",
-                        Placeholder.unparsed("player", args[0])));
+                source.sendMessage(
+                    MiniMessage.miniMessage()
+                        .deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> could not be found!</red>",
+                            Placeholder.unparsed("player", args[0])
+                        )
+                );
                 return;
             }
 
             // Check if player is already banned
             try {
                 if (BanManager.getBan(player) != null) {
-                    source.sendMessage(MiniMessage.miniMessage()
-                        .deserialize(
-                            "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> is already banned!</red>",
-                            Placeholder.unparsed("player", player.username)));
+                    source.sendMessage(
+                        MiniMessage.miniMessage()
+                            .deserialize(
+                                "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> is already banned!</red>",
+                                Placeholder.unparsed("player", player.username)
+                            )
+                    );
                     return;
                 }
             } catch (SQLException e) {
-                NetworkBans.logger.error("Error occurred while checking ban for " + player.username);
+                NetworkBans.logger.error(
+                    "Error occurred while checking ban for " + player.username
+                );
                 e.printStackTrace();
 
-                source.sendMessage(MiniMessage.miniMessage().deserialize(
-                    "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking ban for <username>!</red>",
-                    Placeholder.unparsed("username", player.username)));
+                source.sendMessage(
+                    MiniMessage.miniMessage().deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking ban for <username>!</red>",
+                        Placeholder.unparsed("username", player.username)
+                    )
+                );
                 return;
             }
 
@@ -82,9 +98,13 @@ public class BanCommand implements SimpleCommand {
             } else {
                 try {
                     timeFormat = parseDate(args[args.length - 1]);
-                    reason = arrayToString(Arrays.copyOfRange(args, 1, args.length - 1), " ");
+                    reason = arrayToString(
+                        Arrays.copyOfRange(args, 1, args.length - 1), " "
+                    );
                 } catch (Exception e) {
-                    reason = arrayToString(Arrays.copyOfRange(args, 1, args.length), " ");
+                    reason = arrayToString(
+                        Arrays.copyOfRange(args, 1, args.length), " "
+                    );
                 }
             }
 
@@ -93,51 +113,75 @@ public class BanCommand implements SimpleCommand {
                 try {
                     BanManager.ban(player, reason);
                 } catch (SQLException e) {
-                    NetworkBans.logger.error("Error occurred while banning " + player.username);
+                    NetworkBans.logger.error(
+                        "Error occurred while banning " + player.username
+                    );
                     e.printStackTrace();
 
-                    source.sendMessage(MiniMessage.miniMessage().deserialize(
-                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while banning <username>!</red>",
-                        Placeholder.unparsed("username", player.username)));
+                    source.sendMessage(
+                        MiniMessage.miniMessage().deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while banning <username>!</red>",
+                            Placeholder.unparsed("username", player.username)
+                        )
+                    );
                     return;
                 }
 
                 // Send ban message to sender
-                source.sendMessage(MiniMessage.miniMessage()
-                    .deserialize(
-                        "<gray>You have banned <gold><bold><player></bold></gold> with reason <gold><bold><reason></bold></gold>!</gray>",
-                        Placeholder.unparsed("player", player.username),
-                        Placeholder.unparsed("reason", reason)));
+                source.sendMessage(
+                    MiniMessage.miniMessage()
+                        .deserialize(
+                            "<gray>You have banned <gold><bold><player></bold></gold> with reason <gold><bold><reason></bold></gold>!</gray>",
+                            Placeholder.unparsed("player", player.username),
+                            Placeholder.unparsed("reason", reason)
+                        )
+                );
             } else {
-                Date banUntil = new Date(new Date().getTime() + timeFormat.totalTime);
+                Date banUntil = new Date(
+                    new Date().getTime() + timeFormat.totalTime
+                );
 
                 try {
                     BanManager.ban(player, reason, banUntil);
                 } catch (SQLException e) {
-                    NetworkBans.logger.error("Error occurred while banning " + player.username);
+                    NetworkBans.logger.error(
+                        "Error occurred while banning " + player.username
+                    );
                     e.printStackTrace();
 
-                    source.sendMessage(MiniMessage.miniMessage().deserialize(
-                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while banning <username>!</red>",
-                        Placeholder.unparsed("username", player.username)));
+                    source.sendMessage(
+                        MiniMessage.miniMessage().deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while banning <username>!</red>",
+                            Placeholder.unparsed("username", player.username)
+                        )
+                    );
                     return;
                 }
 
                 // Send ban message to sender
-                source.sendMessage(MiniMessage.miniMessage()
-                    .deserialize(
-                        "<gray>You have banned <gold><bold><username></bold></gold> for <gold><bold><time></bold></gold> with reason <gold><bold><reason></bold></gold>!</gray>",
-                        Placeholder.unparsed("time", timeFormat.multiplier.toString() + " "
-                            + timeFormat.timeFormat),
-                        Placeholder.unparsed("username", player.username), Placeholder.unparsed("reason", reason)));
+                source.sendMessage(
+                    MiniMessage.miniMessage()
+                        .deserialize(
+                            "<gray>You have banned <gold><bold><username></bold></gold> for <gold><bold><time></bold></gold> with reason <gold><bold><reason></bold></gold>!</gray>",
+                            Placeholder.unparsed(
+                                "time", timeFormat.multiplier.toString() + " "
+                                    + timeFormat.timeFormat
+                            ),
+                            Placeholder.unparsed("username", player.username),
+                            Placeholder.unparsed("reason", reason)
+                        )
+                );
             }
 
             Player networkPlayer = NetworkBans.proxy.getPlayer(args[0]).get();
 
             // Send player to hub
             if (networkPlayer != null
-                && !networkPlayer.getCurrentServer().get().getServerInfo().getName().equals("hub")) {
-                networkPlayer.createConnectionRequest(NetworkBans.proxy.getServer("hub").get()).connect();
+                && !networkPlayer.getCurrentServer().get().getServerInfo()
+                    .getName().equals("hub")) {
+                networkPlayer.createConnectionRequest(
+                    NetworkBans.proxy.getServer("hub").get()
+                ).connect();
             }
         }).schedule();
 
@@ -164,8 +208,9 @@ public class BanCommand implements SimpleCommand {
     }
 
     private static enum TimeFrame {
-        s(1000l, "seconds"), m(60000l, "minutes"), h(3600000l, "hours"), d(86400000l, "days"), w(604800000l,
-            "weeks"), mo(2629746000l, "months"), y(31556952000l, "years");
+        s(1000l, "seconds"), m(60000l, "minutes"), h(3600000l, "hours"), d(
+            86400000l, "days"), w(604800000l,
+                "weeks"), mo(2629746000l, "months"), y(31556952000l, "years");
 
         private final Long totalTime;
         private final String timeFormat;

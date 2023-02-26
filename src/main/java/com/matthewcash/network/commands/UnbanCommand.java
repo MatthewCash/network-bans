@@ -25,7 +25,8 @@ public class UnbanCommand implements SimpleCommand {
             return Collections.emptyList();
         }
 
-        return NetworkBans.proxy.getAllPlayers().stream().map(player -> player.getUsername()).toList();
+        return NetworkBans.proxy.getAllPlayers().stream()
+            .map(player -> player.getUsername()).toList();
     }
 
     @Override
@@ -34,8 +35,12 @@ public class UnbanCommand implements SimpleCommand {
         String[] args = invocation.arguments();
 
         if (args.length < 1) {
-            source.sendMessage(MiniMessage.miniMessage()
-                .deserialize("<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player!</red>"));
+            source.sendMessage(
+                MiniMessage.miniMessage()
+                    .deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player!</red>"
+                    )
+            );
             return;
         }
 
@@ -44,29 +49,40 @@ public class UnbanCommand implements SimpleCommand {
             BanPlayer player = BanPlayer.getPlayer(args[0]);
 
             if (player == null) {
-                source.sendMessage(MiniMessage.miniMessage()
-                    .deserialize(
-                        "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> could not be found!</red>",
-                        Placeholder.unparsed("player", args[0])));
+                source.sendMessage(
+                    MiniMessage.miniMessage()
+                        .deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> could not be found!</red>",
+                            Placeholder.unparsed("player", args[0])
+                        )
+                );
                 return;
             }
 
             // Check if Player is banned
             try {
                 if (BanManager.getBan(player) == null) {
-                    source.sendMessage(MiniMessage.miniMessage()
-                        .deserialize(
-                            "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> is not banned!</red>",
-                            Placeholder.unparsed("player", player.username)));
+                    source.sendMessage(
+                        MiniMessage.miniMessage()
+                            .deserialize(
+                                "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> is not banned!</red>",
+                                Placeholder.unparsed("player", player.username)
+                            )
+                    );
                     return;
                 }
             } catch (SQLException e) {
-                NetworkBans.logger.error("Error occurred while checking ban for " + player.username);
+                NetworkBans.logger.error(
+                    "Error occurred while checking ban for " + player.username
+                );
                 e.printStackTrace();
 
-                source.sendMessage(MiniMessage.miniMessage().deserialize(
-                    "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking ban for <username>!</red>",
-                    Placeholder.unparsed("username", player.username)));
+                source.sendMessage(
+                    MiniMessage.miniMessage().deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking ban for <username>!</red>",
+                        Placeholder.unparsed("username", player.username)
+                    )
+                );
                 return;
             }
 
@@ -74,19 +90,26 @@ public class UnbanCommand implements SimpleCommand {
             try {
                 BanManager.unban(player);
             } catch (SQLException e) {
-                NetworkBans.logger.error("Error occurred while unbanning " + player.username);
+                NetworkBans.logger
+                    .error("Error occurred while unbanning " + player.username);
                 e.printStackTrace();
 
-                source.sendMessage(MiniMessage.miniMessage().deserialize(
-                    "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while unbanning <username>!</red>",
-                    Placeholder.unparsed("username", player.username)));
+                source.sendMessage(
+                    MiniMessage.miniMessage().deserialize(
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while unbanning <username>!</red>",
+                        Placeholder.unparsed("username", player.username)
+                    )
+                );
                 return;
             }
 
-            source.sendMessage(MiniMessage.miniMessage()
-                .deserialize(
-                    "<gray>You have unbanned <gold><bold><username></bold></gold>!</gray>",
-                    Placeholder.unparsed("username", player.username)));
+            source.sendMessage(
+                MiniMessage.miniMessage()
+                    .deserialize(
+                        "<gray>You have unbanned <gold><bold><username></bold></gold>!</gray>",
+                        Placeholder.unparsed("username", player.username)
+                    )
+            );
 
         }).schedule();
 
