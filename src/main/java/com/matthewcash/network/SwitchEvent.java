@@ -13,13 +13,14 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 public class SwitchEvent {
     @Subscribe(order = PostOrder.LAST)
-    public void onServerConnect(ServerPreConnectEvent event) {
+    public void onServerPreConnect(ServerPreConnectEvent event) {
         Player player = event.getPlayer();
 
         RegisteredServer server = event.getResult().getServer().get();
+        RegisteredServer hubServer = NetworkBans.proxy.getServer("hub").get();
 
         // Ignore if Player is connecting to hub
-        if (server == null || server.getServerInfo().getName().equals("hub")) {
+        if (server == null || server == hubServer) {
             return;
         }
 
@@ -41,11 +42,17 @@ public class SwitchEvent {
             return;
         }
 
-        // Player is banned, stop connection
-        event.setResult(ServerPreConnectEvent.ServerResult.denied());
+        // Player is banned, stop connection or redirect to hub
+        if (player.getCurrentServer().isPresent()) {
+            event.setResult(ServerPreConnectEvent.ServerResult.denied());
+        } else {
+            event.setResult(
+                ServerPreConnectEvent.ServerResult.allowed(hubServer)
+            );
+
+        }
 
         // Send ban message
-
         player.sendMessage(
             MiniMessage.miniMessage()
                 .deserialize(
