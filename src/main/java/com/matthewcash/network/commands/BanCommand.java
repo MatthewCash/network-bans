@@ -173,7 +173,8 @@ public class BanCommand implements SimpleCommand {
                 );
             }
 
-            Player networkPlayer = NetworkBans.proxy.getPlayer(args[0]).get();
+            Player networkPlayer = NetworkBans.proxy.getPlayer(args[0])
+                .orElse(null);
 
             // Send player to hub
             if (networkPlayer != null
