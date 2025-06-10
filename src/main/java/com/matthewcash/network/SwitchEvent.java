@@ -13,7 +13,8 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 public class SwitchEvent {
     @Subscribe(order = PostOrder.LAST)
-    public void onServerPreConnect(ServerPreConnectEvent event) {
+    public void onServerPreConnect(ServerPreConnectEvent event)
+        throws InterruptedException {
         Player player = event.getPlayer();
 
         RegisteredServer server = event.getResult().getServer().get();
@@ -24,15 +25,15 @@ public class SwitchEvent {
             return;
         }
 
-        BanPlayer banPlayer = BanPlayer.getPlayer(player.getUsername());
+        PlayerData playerData = PlayerData.getPlayer(player.getUsername());
 
         // Check if player is banned
         Ban ban = null;
         try {
-            ban = BanManager.getBan(banPlayer);
+            ban = BanManager.getBan(playerData);
         } catch (SQLException e) {
             NetworkBans.logger.error(
-                "Error occurred while checking ban for " + banPlayer.username
+                "Failed to check ban for " + playerData.username()
             );
             e.printStackTrace();
         }
@@ -57,7 +58,7 @@ public class SwitchEvent {
             MiniMessage.miniMessage()
                 .deserialize(
                     "<newline><bold><red>You have been <dark_red>BANNED</dark_red> and may no longer connect to this server!</red></bold><newline><reason><newline>",
-                    Placeholder.unparsed("reason", ban.reason)
+                    Placeholder.unparsed("reason", ban.reason())
                 )
         );
     }

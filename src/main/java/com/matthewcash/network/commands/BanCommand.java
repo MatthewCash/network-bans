@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.matthewcash.network.BanManager;
-import com.matthewcash.network.BanPlayer;
+import com.matthewcash.network.PlayerData;
 import com.matthewcash.network.NetworkBans;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
@@ -49,9 +49,22 @@ public class BanCommand implements SimpleCommand {
 
         NetworkBans.proxy.getScheduler().buildTask(NetworkBans.plugin, () -> {
             // Lookup UUID
-            BanPlayer player = BanPlayer.getPlayer(args[0]);
+            PlayerData playerData;
+            try {
+                playerData = PlayerData.getPlayer(args[0]);
+            } catch (InterruptedException e) {
+                source.sendMessage(
+                    MiniMessage.miniMessage()
+                        .deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to lookup UUID for <player>!</red>",
+                            Placeholder.unparsed("player", args[0])
+                        )
+                );
+                e.printStackTrace();
+                return;
+            }
 
-            if (player == null) {
+            if (playerData == null) {
                 source.sendMessage(
                     MiniMessage.miniMessage()
                         .deserialize(
@@ -64,26 +77,27 @@ public class BanCommand implements SimpleCommand {
 
             // Check if player is already banned
             try {
-                if (BanManager.getBan(player) != null) {
+                if (BanManager.getBan(playerData) != null) {
                     source.sendMessage(
                         MiniMessage.miniMessage()
                             .deserialize(
                                 "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> is already banned!</red>",
-                                Placeholder.unparsed("player", player.username)
+                                Placeholder
+                                    .unparsed("player", playerData.username())
                             )
                     );
                     return;
                 }
             } catch (SQLException e) {
                 NetworkBans.logger.error(
-                    "Error occurred while checking ban for " + player.username
+                    "Failed to check ban for " + playerData.username()
                 );
                 e.printStackTrace();
 
                 source.sendMessage(
                     MiniMessage.miniMessage().deserialize(
-                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking ban for <username>!</red>",
-                        Placeholder.unparsed("username", player.username)
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to ban <username>!</red>",
+                        Placeholder.unparsed("username", playerData.username())
                     )
                 );
                 return;
@@ -111,17 +125,18 @@ public class BanCommand implements SimpleCommand {
             // Ban the player
             if (timeFormat == null) {
                 try {
-                    BanManager.ban(player, reason);
+                    BanManager.ban(playerData, reason);
                 } catch (SQLException e) {
                     NetworkBans.logger.error(
-                        "Error occurred while banning " + player.username
+                        "Failed to ban " + playerData.username()
                     );
                     e.printStackTrace();
 
                     source.sendMessage(
                         MiniMessage.miniMessage().deserialize(
-                            "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while banning <username>!</red>",
-                            Placeholder.unparsed("username", player.username)
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to ban <username>!</red>",
+                            Placeholder
+                                .unparsed("username", playerData.username())
                         )
                     );
                     return;
@@ -132,7 +147,8 @@ public class BanCommand implements SimpleCommand {
                     MiniMessage.miniMessage()
                         .deserialize(
                             "<gray>You have banned <gold><bold><player></bold></gold> with reason <gold><bold><reason></bold></gold>!</gray>",
-                            Placeholder.unparsed("player", player.username),
+                            Placeholder
+                                .unparsed("player", playerData.username()),
                             Placeholder.unparsed("reason", reason)
                         )
                 );
@@ -142,17 +158,18 @@ public class BanCommand implements SimpleCommand {
                 );
 
                 try {
-                    BanManager.ban(player, reason, banUntil);
+                    BanManager.ban(playerData, reason, banUntil);
                 } catch (SQLException e) {
                     NetworkBans.logger.error(
-                        "Error occurred while banning " + player.username
+                        "Failed to ban " + playerData.username()
                     );
                     e.printStackTrace();
 
                     source.sendMessage(
                         MiniMessage.miniMessage().deserialize(
-                            "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while banning <username>!</red>",
-                            Placeholder.unparsed("username", player.username)
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to ban <username>!</red>",
+                            Placeholder
+                                .unparsed("username", playerData.username())
                         )
                     );
                     return;
@@ -167,7 +184,8 @@ public class BanCommand implements SimpleCommand {
                                 "time", timeFormat.multiplier.toString() + " "
                                     + timeFormat.timeFormat
                             ),
-                            Placeholder.unparsed("username", player.username),
+                            Placeholder
+                                .unparsed("username", playerData.username()),
                             Placeholder.unparsed("reason", reason)
                         )
                 );
@@ -177,9 +195,11 @@ public class BanCommand implements SimpleCommand {
                 .orElse(null);
 
             // Send player to hub
-            if (networkPlayer != null
-                && !networkPlayer.getCurrentServer().get().getServerInfo()
-                    .getName().equals("hub")) {
+            if (
+                networkPlayer != null
+                    && !networkPlayer.getCurrentServer().get().getServerInfo()
+                        .getName().equals("hub")
+            ) {
                 networkPlayer.createConnectionRequest(
                     NetworkBans.proxy.getServer("hub").get()
                 ).connect();
@@ -210,8 +230,11 @@ public class BanCommand implements SimpleCommand {
 
     private static enum TimeFrame {
         s(1000l, "seconds"), m(60000l, "minutes"), h(3600000l, "hours"), d(
-            86400000l, "days"), w(604800000l,
-                "weeks"), mo(2629746000l, "months"), y(31556952000l, "years");
+            86400000l, "days"
+        ), w(
+            604800000l,
+            "weeks"
+        ), mo(2629746000l, "months"), y(31556952000l, "years");
 
         private final Long totalTime;
         private final String timeFormat;

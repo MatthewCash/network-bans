@@ -60,7 +60,7 @@ public class DatabaseManager implements Closeable {
             connection.close();
         } catch (SQLException e) {
             NetworkBans.logger
-                .error("Database error occurred while creating bans table");
+                .error("Failed to create bans table");
             e.printStackTrace();
         }
     }

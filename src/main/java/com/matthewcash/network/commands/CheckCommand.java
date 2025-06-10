@@ -9,7 +9,7 @@ import java.util.Optional;
 
 import com.matthewcash.network.Ban;
 import com.matthewcash.network.BanManager;
-import com.matthewcash.network.BanPlayer;
+import com.matthewcash.network.PlayerData;
 import com.matthewcash.network.IpBanManager;
 import com.matthewcash.network.NetworkBans;
 import com.velocitypowered.api.command.CommandSource;
@@ -54,9 +54,22 @@ public class CheckCommand implements SimpleCommand {
 
         NetworkBans.proxy.getScheduler().buildTask(NetworkBans.plugin, () -> {
             String ipAddress = null;
-            BanPlayer player = BanPlayer.getPlayer(args[0]);
+            PlayerData playerData;
+            try {
+                playerData = PlayerData.getPlayer(args[0]);
+            } catch (InterruptedException e) {
+                source.sendMessage(
+                    MiniMessage.miniMessage()
+                        .deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to lookup UUID for <player>!</red>",
+                            Placeholder.unparsed("player", args[0])
+                        )
+                );
+                e.printStackTrace();
+                return;
+            }
 
-            if (player != null) {
+            if (playerData != null) {
                 Optional<Player> proxiedPlayer = NetworkBans.proxy
                     .getPlayer(args[0]);
                 if (proxiedPlayer.isPresent()) {
@@ -67,12 +80,14 @@ public class CheckCommand implements SimpleCommand {
                 ipAddress = args[0];
             }
 
-            if (ipAddress != null
-                && !IpBanManager.isValidIpAddress(ipAddress)) {
+            if (
+                ipAddress != null
+                    && !IpBanManager.isValidIpAddress(ipAddress)
+            ) {
                 ipAddress = null;
             }
 
-            if (player == null && ipAddress == null) {
+            if (playerData == null && ipAddress == null) {
                 source.sendMessage(
                     MiniMessage.miniMessage().deserialize(
                         "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a valid player or IP address!</red>"
@@ -83,18 +98,19 @@ public class CheckCommand implements SimpleCommand {
 
             // Check Ban
             Ban ban = null;
-            if (player != null) {
+            if (playerData != null) {
                 try {
-                    ban = BanManager.getBan(player);
+                    ban = BanManager.getBan(playerData);
                 } catch (SQLException e) {
                     NetworkBans.logger.error(
-                        "Error occurred while checking ban for "
-                            + player.username
+                        "Failed to check ban for "
+                            + playerData.username()
                     );
                     source.sendMessage(
                         MiniMessage.miniMessage().deserialize(
-                            "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking ban for <username>!</red>",
-                            Placeholder.unparsed("username", player.username)
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to check ban for <username>!</red>",
+                            Placeholder
+                                .unparsed("username", playerData.username())
                         )
                     );
                     e.printStackTrace();
@@ -107,15 +123,17 @@ public class CheckCommand implements SimpleCommand {
             if (ipAddress != null) {
                 try {
                     isIpBanned = IpBanManager.checkIp(ipAddress);
-                } catch (IOException | RuntimeException e) {
+                } catch (
+                    IOException | InterruptedException e
+                ) {
                     NetworkBans.logger.error(
-                        "Error occurred while checking IP-Ban for " + ipAddress
+                        "Failed to check IP-Ban for " + ipAddress
                     );
                     e.printStackTrace();
 
                     source.sendMessage(
                         MiniMessage.miniMessage().deserialize(
-                            "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking IP-ban for <ip>!</red>",
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to check IP-ban for <ip>!</red>",
                             Placeholder.unparsed("ip", ipAddress)
                         )
                     );
@@ -124,7 +142,8 @@ public class CheckCommand implements SimpleCommand {
 
             // Not Banned
             if (ban == null && isIpBanned == false) {
-                String name = player != null ? player.username : ipAddress;
+                String name = playerData != null ? playerData.username()
+                    : ipAddress;
 
                 source.sendMessage(
                     MiniMessage.miniMessage()
@@ -148,11 +167,11 @@ public class CheckCommand implements SimpleCommand {
             if (ban != null) {
                 Component banComponent = MiniMessage.miniMessage().deserialize(
                     "<bold><red>✖</red> <gold><username></gold></bold> <gray>has been <red><bold>BANNED</bold></red> with reason <gold><bold><reason></bold></gold></gray>",
-                    Placeholder.unparsed("username", player.username),
-                    Placeholder.unparsed("reason", ban.reason)
+                    Placeholder.unparsed("username", playerData.username()),
+                    Placeholder.unparsed("reason", ban.reason())
                 );
 
-                if (ban.unbanTime == null) {
+                if (ban.unbanTime() == null) {
                     source.sendMessage(
                         banComponent.append(
                             Component.text("!").color(NamedTextColor.GRAY)
@@ -168,7 +187,7 @@ public class CheckCommand implements SimpleCommand {
                             Placeholder.unparsed(
                                 "time",
                                 DateFormat.getDateTimeInstance()
-                                    .format(ban.unbanTime)
+                                    .format(ban.unbanTime())
                             )
                         )
                     )

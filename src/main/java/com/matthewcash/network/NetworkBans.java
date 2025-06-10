@@ -27,8 +27,10 @@ public class NetworkBans {
     public static DatabaseManager databaseManager;
 
     @Inject
-    public NetworkBans(ProxyServer proxy, Logger logger,
-        @DataDirectory Path dataDirectory) {
+    public NetworkBans(
+        ProxyServer proxy, Logger logger,
+        @DataDirectory Path dataDirectory
+    ) {
         NetworkBans.plugin = this;
         NetworkBans.proxy = proxy;
         NetworkBans.logger = logger;
@@ -42,7 +44,7 @@ public class NetworkBans {
         try {
             databaseManager = new DatabaseManager();
         } catch (IOException | SQLException | PropertyVetoException e) {
-            logger.error("Error while occurred initializing database pool!");
+            logger.error("Failed to initialize database pool!");
             e.printStackTrace();
         }
 

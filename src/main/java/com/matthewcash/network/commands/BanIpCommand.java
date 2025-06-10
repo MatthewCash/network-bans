@@ -74,11 +74,12 @@ public class BanIpCommand implements SimpleCommand {
                 }
 
                 IpBanManager.ipBan(ipAddress);
-            } catch (IOException | RuntimeException e) {
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
                 source.sendMessage(
                     MiniMessage.miniMessage()
                         .deserialize(
-                            "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while IP-banning <ip>!</red>",
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to IP-ban <ip>!</red>",
                             Placeholder.unparsed("ip", ipAddress)
                         )
                 );

@@ -72,11 +72,12 @@ public class UnbanIpCommand implements SimpleCommand {
                 }
 
                 IpBanManager.ipUnBan(ipAddress);
-            } catch (IOException | RuntimeException e) {
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
                 source.sendMessage(
                     MiniMessage.miniMessage()
                         .deserialize(
-                            "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while IP-unbanning <ip>!</red>",
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to IP-unban <ip>!</red>",
                             Placeholder.unparsed("ip", ipAddress)
                         )
                 );

@@ -2,125 +2,126 @@ package com.matthewcash.network;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonReader;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
 
 import com.velocitypowered.api.proxy.Player;
 
 public class IpBanManager {
-    private static final String apiPath = ConfigManager.config
-        .get("ipban.api_url");
+    private static final URI apiUri = URI.create(
+        ConfigManager.config
+            .get("ipban.api_url")
+    );
     private static final String authToken = ConfigManager.config
         .get("ipban.auth_token");
 
+    private static final HttpClient httpClient = HttpClient.newHttpClient();
+
     public static String getIpFromPlayer(Player player) {
-        return player.getRemoteAddress().getAddress().toString();
+        return player.getRemoteAddress().getAddress().getHostAddress();
     }
 
     public static boolean isValidIpAddress(String ipAddress) {
-        return ipAddress
-            .matches(
-                "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
-            );
+        System.out.println("checkign ip " + ipAddress);
+        try {
+            InetAddress address = InetAddress.getByName(ipAddress);
+            return ipAddress.equals(address.getHostAddress());
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public static void ipBan(String ipAddress)
-        throws ClientProtocolException, IOException {
-        JsonObjectBuilder payloadJsonBuilder = Json.createObjectBuilder();
-        payloadJsonBuilder.add("ban", ipAddress);
-        String rawJson = payloadJsonBuilder.build().toString();
+        throws IOException, InterruptedException {
+        String json = Json.createObjectBuilder()
+            .add("ban", ipAddress)
+            .build()
+            .toString();
 
-        HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpResponse response;
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(apiUri)
+            .timeout(Duration.ofSeconds(1))
+            .header("Content-Type", "application/json")
+            .header("Authorization", authToken)
+            .POST(HttpRequest.BodyPublishers.ofString(json))
+            .build();
 
-        HttpPost request = new HttpPost(apiPath);
+        HttpResponse<String> response = httpClient
+            .send(request, HttpResponse.BodyHandlers.ofString());
 
-        StringEntity params = new StringEntity(rawJson);
-        request.addHeader("content-type", "application/json");
-        request.addHeader("Authorization", authToken);
-
-        request.setEntity(params);
-        response = httpClient.execute(request);
-
-        if (response.getStatusLine().getStatusCode() != 200) {
-            NetworkBans.logger
-                .error(response.getStatusLine().getReasonPhrase());
+        if (response.statusCode() != 200) {
+            NetworkBans.logger.error(response.body());
             throw new RuntimeException(
-                "An error occurred while attempting to IP-Ban!"
+                "Response code is not 200:" + response.body()
             );
         }
     }
 
     public static void ipUnBan(String ipAddress)
-        throws ClientProtocolException, IOException {
-        JsonObjectBuilder payloadJsonBuilder = Json.createObjectBuilder();
-        payloadJsonBuilder.add("unban", ipAddress);
-        String rawJson = payloadJsonBuilder.build().toString();
+        throws IOException, InterruptedException {
+        String json = Json.createObjectBuilder()
+            .add("unban", ipAddress)
+            .build()
+            .toString();
 
-        HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpResponse response;
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(apiUri)
+            .timeout(Duration.ofSeconds(1))
+            .header("Content-Type", "application/json")
+            .header("Authorization", authToken)
+            .POST(HttpRequest.BodyPublishers.ofString(json))
+            .build();
 
-        HttpPost request = new HttpPost(apiPath);
+        HttpResponse<String> response = httpClient
+            .send(request, HttpResponse.BodyHandlers.ofString());
 
-        StringEntity params = new StringEntity(rawJson);
-        request.addHeader("content-type", "application/json");
-        request.addHeader("Authorization", authToken);
-
-        request.setEntity(params);
-        response = httpClient.execute(request);
-
-        if (response.getStatusLine().getStatusCode() != 200) {
-            NetworkBans.logger
-                .error(response.getStatusLine().getReasonPhrase());
+        if (response.statusCode() != 200) {
+            NetworkBans.logger.error(response.body());
             throw new RuntimeException(
-                "An error occurred while attempting to IP-UnBan!"
+                "Response code is not 200:" + response.body()
             );
         }
     }
 
     public static boolean checkIp(String ipAddress)
-        throws ClientProtocolException, IOException {
-        JsonObjectBuilder payloadJsonBuilder = Json.createObjectBuilder();
-        payloadJsonBuilder.add("check", ipAddress);
-        String rawJson = payloadJsonBuilder.build().toString();
+        throws IOException, InterruptedException {
+        String json = Json.createObjectBuilder()
+            .add("check", ipAddress)
+            .build()
+            .toString();
 
-        HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpResponse response;
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(apiUri)
+            .timeout(Duration.ofSeconds(1))
+            .header("Content-Type", "application/json")
+            .header("Authorization", authToken)
+            .POST(HttpRequest.BodyPublishers.ofString(json))
+            .build();
 
-        HttpPost request = new HttpPost(apiPath);
+        HttpResponse<String> response = httpClient
+            .send(request, HttpResponse.BodyHandlers.ofString());
 
-        StringEntity params = new StringEntity(rawJson);
-        request.addHeader("content-type", "application/json");
-        request.addHeader("Authorization", authToken);
-
-        request.setEntity(params);
-        response = httpClient.execute(request);
-
-        if (response.getStatusLine().getStatusCode() != 200) {
-            NetworkBans.logger
-                .error(response.getStatusLine().getReasonPhrase());
+        if (response.statusCode() != 200) {
+            NetworkBans.logger.error(response.body());
             throw new RuntimeException(
-                "An error occurred while checking for IP-Ban!"
+                "Response code is not 200:" + response.body()
             );
         }
 
-        String responseBody = EntityUtils.toString(response.getEntity());
-
-        JsonReader jsonReader = Json
-            .createReader(new StringReader(responseBody));
-        JsonObject jsonMessage = jsonReader.readObject();
-
-        return jsonMessage.getBoolean("isIpBanned");
+        try (
+            JsonReader reader = Json
+                .createReader(new StringReader(response.body()))
+        ) {
+            JsonObject jsonObject = reader.readObject();
+            return jsonObject.getBoolean("isIpBanned", false);
+        }
     }
 }

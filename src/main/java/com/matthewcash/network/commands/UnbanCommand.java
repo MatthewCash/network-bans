@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.matthewcash.network.BanManager;
-import com.matthewcash.network.BanPlayer;
+import com.matthewcash.network.PlayerData;
 import com.matthewcash.network.NetworkBans;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
@@ -46,9 +46,22 @@ public class UnbanCommand implements SimpleCommand {
 
         NetworkBans.proxy.getScheduler().buildTask(NetworkBans.plugin, () -> {
             // Lookup UUID
-            BanPlayer player = BanPlayer.getPlayer(args[0]);
+            PlayerData playerData;
+            try {
+                playerData = PlayerData.getPlayer(args[0]);
+            } catch (InterruptedException e) {
+                source.sendMessage(
+                    MiniMessage.miniMessage()
+                        .deserialize(
+                            "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to lookup UUID for <player>!</red>",
+                            Placeholder.unparsed("player", args[0])
+                        )
+                );
+                e.printStackTrace();
+                return;
+            }
 
-            if (player == null) {
+            if (playerData == null) {
                 source.sendMessage(
                     MiniMessage.miniMessage()
                         .deserialize(
@@ -61,26 +74,28 @@ public class UnbanCommand implements SimpleCommand {
 
             // Check if Player is banned
             try {
-                if (BanManager.getBan(player) == null) {
+                if (BanManager.getBan(playerData) == null) {
                     source.sendMessage(
                         MiniMessage.miniMessage()
                             .deserialize(
                                 "<dark_red><bold>ERROR</bold></dark_red> <red>Player <player> is not banned!</red>",
-                                Placeholder.unparsed("player", player.username)
+                                Placeholder
+                                    .unparsed("player", playerData.username())
                             )
                     );
                     return;
                 }
             } catch (SQLException e) {
                 NetworkBans.logger.error(
-                    "Error occurred while checking ban for " + player.username
+                    "Failed to check ban for "
+                        + playerData.username()
                 );
                 e.printStackTrace();
 
                 source.sendMessage(
                     MiniMessage.miniMessage().deserialize(
-                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while checking ban for <username>!</red>",
-                        Placeholder.unparsed("username", player.username)
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to check ban for <username>!</red>",
+                        Placeholder.unparsed("username", playerData.username())
                     )
                 );
                 return;
@@ -88,16 +103,18 @@ public class UnbanCommand implements SimpleCommand {
 
             // Unban Player
             try {
-                BanManager.unban(player);
+                BanManager.unban(playerData);
             } catch (SQLException e) {
                 NetworkBans.logger
-                    .error("Error occurred while unbanning " + player.username);
+                    .error(
+                        "Failed to unban " + playerData.username()
+                    );
                 e.printStackTrace();
 
                 source.sendMessage(
                     MiniMessage.miniMessage().deserialize(
-                        "<dark_red><bold>ERROR</bold></dark_red> <red>An error occurred while unbanning <username>!</red>",
-                        Placeholder.unparsed("username", player.username)
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to unban <username>!</red>",
+                        Placeholder.unparsed("username", playerData.username())
                     )
                 );
                 return;
@@ -107,7 +124,7 @@ public class UnbanCommand implements SimpleCommand {
                 MiniMessage.miniMessage()
                     .deserialize(
                         "<gray>You have unbanned <gold><bold><username></bold></gold>!</gray>",
-                        Placeholder.unparsed("username", player.username)
+                        Placeholder.unparsed("username", playerData.username())
                     )
             );
 

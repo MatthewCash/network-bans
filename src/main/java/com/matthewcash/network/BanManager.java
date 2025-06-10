@@ -12,12 +12,12 @@ public class BanManager {
         return NetworkBans.databaseManager.getConnection();
     }
 
-    public static Ban getBan(BanPlayer player) throws SQLException {
+    public static Ban getBan(PlayerData playerData) throws SQLException {
         Ban ban = null;
         Connection connection = getConnection();
         PreparedStatement stmt = connection
             .prepareStatement("SELECT * from bans WHERE uuid= ?;");
-        stmt.setString(1, player.uuid.toString());
+        stmt.setString(1, playerData.uuid().toString());
         ResultSet results = stmt.executeQuery();
 
         if (!results.next()) {
@@ -33,46 +33,46 @@ public class BanManager {
         if (banUntil != null && banUntil.compareTo(new Date()) < 0) {
             PreparedStatement removeStatement = connection
                 .prepareStatement("DELETE FROM bans WHERE uuid= ?;");
-            removeStatement.setString(1, player.uuid.toString());
+            removeStatement.setString(1, playerData.uuid().toString());
             removeStatement.execute();
 
             return null;
         }
-        ban = new Ban(player.uuid, reason, banUntil);
+        ban = new Ban(playerData.uuid(), reason, banUntil);
         connection.close();
         return ban;
     }
 
-    public static void ban(BanPlayer player, String reason)
+    public static void ban(PlayerData playerData, String reason)
         throws SQLException {
         Connection connection = getConnection();
         PreparedStatement stmt = connection
             .prepareStatement("INSERT INTO bans(uuid, reason) VALUES (?, ?)");
-        stmt.setString(1, player.uuid.toString());
+        stmt.setString(1, playerData.uuid().toString());
         stmt.setString(2, reason);
         stmt.execute();
         connection.close();
     }
 
-    public static void ban(BanPlayer player, String reason, Date banUntil)
+    public static void ban(PlayerData playerData, String reason, Date banUntil)
         throws SQLException {
         Connection connection = getConnection();
         PreparedStatement stmt = connection
             .prepareStatement(
                 "INSERT INTO bans(uuid, reason, banUntil) VALUES (?, ?, ?)"
             );
-        stmt.setString(1, player.uuid.toString());
+        stmt.setString(1, playerData.uuid().toString());
         stmt.setString(2, reason);
         stmt.setLong(3, banUntil.getTime());
         stmt.execute();
         connection.close();
     }
 
-    public static void unban(BanPlayer player) throws SQLException {
+    public static void unban(PlayerData playerData) throws SQLException {
         Connection connection = getConnection();
         PreparedStatement stmt = connection
             .prepareStatement("DELETE FROM bans WHERE uuid= ?");
-        stmt.setString(1, player.uuid.toString());
+        stmt.setString(1, playerData.uuid().toString());
         stmt.execute();
         connection.close();
     }
