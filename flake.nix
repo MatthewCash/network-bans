@@ -10,10 +10,10 @@
         };
     };
 
-    outputs = inputs @ { self, nixpkgs, flake-utils, ... }:
+    outputs = { nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
-        let pkgs = nixpkgs.legacyPackages.${system}; in rec {
-            devShell = pkgs.mkShell rec {
+        let pkgs = nixpkgs.legacyPackages.${system}; in {
+            devShell = pkgs.mkShell {
                 name = "network-bans";
                 packages = with pkgs; [
                     gradle

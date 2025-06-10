@@ -5,6 +5,6 @@
 ## Build Instructions
 
 ```bash
-# build jar with maven
-$ mvn package
+# build jar with gradle
+$ gradle build
 ```
