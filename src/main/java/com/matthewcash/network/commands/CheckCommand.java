@@ -1,6 +1,7 @@
 package com.matthewcash.network.commands;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -123,19 +124,16 @@ public class CheckCommand implements SimpleCommand {
                 try {
                     isIpBanned = IpBanManager.checkIp(ipAddress);
                 } catch (
-                    IOException | InterruptedException e
+                    IOException | InterruptedException | URISyntaxException e
                 ) {
-                    NetworkBans.logger.error(
-                        "Failed to check IP-Ban for " + ipAddress
-                    );
-                    e.printStackTrace();
-
                     source.sendMessage(
                         MiniMessage.miniMessage().deserialize(
                             "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to check IP-ban for <ip>!</red>",
                             Placeholder.unparsed("ip", ipAddress)
                         )
                     );
+                    e.printStackTrace();
+                    return;
                 }
             }
 

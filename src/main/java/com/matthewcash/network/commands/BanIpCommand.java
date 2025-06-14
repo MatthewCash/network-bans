@@ -1,6 +1,7 @@
 package com.matthewcash.network.commands;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -74,7 +75,9 @@ public class BanIpCommand implements SimpleCommand {
                 }
 
                 IpBanManager.ipBan(ipAddress);
-            } catch (IOException | InterruptedException e) {
+            } catch (
+                IOException | InterruptedException | URISyntaxException e
+            ) {
                 e.printStackTrace();
                 source.sendMessage(
                     MiniMessage.miniMessage()

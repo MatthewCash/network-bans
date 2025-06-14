@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -30,7 +31,6 @@ public class IpBanManager {
     }
 
     public static boolean isValidIpAddress(String ipAddress) {
-        System.out.println("checkign ip " + ipAddress);
         try {
             InetAddress address = InetAddress.getByName(ipAddress);
             return ipAddress.equals(address.getHostAddress());
@@ -40,14 +40,14 @@ public class IpBanManager {
     }
 
     public static void ipBan(String ipAddress)
-        throws IOException, InterruptedException {
+        throws IOException, InterruptedException, URISyntaxException {
         String json = Json.createObjectBuilder()
-            .add("ban", ipAddress)
+            .add("addr", ipAddress)
             .build()
             .toString();
 
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(apiUri)
+            .uri(new URI(apiUri + "/add"))
             .timeout(Duration.ofSeconds(1))
             .header("Content-Type", "application/json")
             .header("Authorization", authToken)
@@ -66,14 +66,14 @@ public class IpBanManager {
     }
 
     public static void ipUnBan(String ipAddress)
-        throws IOException, InterruptedException {
+        throws IOException, InterruptedException, URISyntaxException {
         String json = Json.createObjectBuilder()
-            .add("unban", ipAddress)
+            .add("addr", ipAddress)
             .build()
             .toString();
 
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(apiUri)
+            .uri(new URI(apiUri + "/remove"))
             .timeout(Duration.ofSeconds(1))
             .header("Content-Type", "application/json")
             .header("Authorization", authToken)
@@ -92,14 +92,14 @@ public class IpBanManager {
     }
 
     public static boolean checkIp(String ipAddress)
-        throws IOException, InterruptedException {
+        throws IOException, InterruptedException, URISyntaxException {
         String json = Json.createObjectBuilder()
-            .add("check", ipAddress)
+            .add("addr", ipAddress)
             .build()
             .toString();
 
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(apiUri)
+            .uri(new URI(apiUri + "/check"))
             .timeout(Duration.ofSeconds(1))
             .header("Content-Type", "application/json")
             .header("Authorization", authToken)
@@ -121,7 +121,7 @@ public class IpBanManager {
                 .createReader(new StringReader(response.body()))
         ) {
             JsonObject jsonObject = reader.readObject();
-            return jsonObject.getBoolean("isIpBanned", false);
+            return jsonObject.getBoolean("present", false);
         }
     }
 }
