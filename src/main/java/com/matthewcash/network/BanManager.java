@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.Date;
 
 public class BanManager {
@@ -54,7 +55,9 @@ public class BanManager {
         connection.close();
     }
 
-    public static void ban(PlayerData playerData, String reason, Date banUntil)
+    public static void ban(
+        PlayerData playerData, String reason, Instant banUntil
+    )
         throws SQLException {
         Connection connection = getConnection();
         PreparedStatement stmt = connection
@@ -63,7 +66,7 @@ public class BanManager {
             );
         stmt.setString(1, playerData.uuid().toString());
         stmt.setString(2, reason);
-        stmt.setLong(3, banUntil.getTime());
+        stmt.setLong(3, banUntil.toEpochMilli());
         stmt.execute();
         connection.close();
     }

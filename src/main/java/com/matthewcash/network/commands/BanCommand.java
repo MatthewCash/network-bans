@@ -1,9 +1,9 @@
 package com.matthewcash.network.commands;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import com.matthewcash.network.BanManager;
@@ -111,13 +111,16 @@ public class BanCommand implements SimpleCommand {
                 reason = "No Reason Specified";
             } else {
                 try {
-                    timeFormat = parseDate(args[args.length - 1]);
-                    reason = arrayToString(
-                        Arrays.copyOfRange(args, 1, args.length - 1), " "
-                    );
+                    timeFormat = parseDate(args[1]);
+                    reason = args.length < 3 ? "No Reason Specified"
+                        : String.join(
+                            " ",
+                            Arrays.copyOfRange(args, 2, args.length)
+                        );
                 } catch (Exception e) {
-                    reason = arrayToString(
-                        Arrays.copyOfRange(args, 1, args.length), " "
+                    reason = String.join(
+                        " ",
+                        Arrays.copyOfRange(args, 1, args.length)
                     );
                 }
             }
@@ -153,9 +156,8 @@ public class BanCommand implements SimpleCommand {
                         )
                 );
             } else {
-                Date banUntil = new Date(
-                    new Date().getTime() + timeFormat.totalTime
-                );
+                Instant banUntil = Instant.now()
+                    .plusMillis(timeFormat.totalMillis);
 
                 try {
                     BanManager.ban(playerData, reason, banUntil);
@@ -181,8 +183,8 @@ public class BanCommand implements SimpleCommand {
                         .deserialize(
                             "<gray>You have banned <gold><bold><username></bold></gold> for <gold><bold><time></bold></gold> with reason <gold><bold><reason></bold></gold>!</gray>",
                             Placeholder.unparsed(
-                                "time", timeFormat.multiplier.toString() + " "
-                                    + timeFormat.timeFormat
+                                "time", timeFormat.quantity + " "
+                                    + timeFormat.unit
                             ),
                             Placeholder
                                 .unparsed("username", playerData.username()),
@@ -208,54 +210,39 @@ public class BanCommand implements SimpleCommand {
 
     }
 
-    private static String arrayToString(String[] array, String separator) {
-        StringBuilder sb = new StringBuilder();
-        for (String string : array) {
-            sb.append(string).append(separator);
-        }
-        return sb.substring(0, sb.length() - 1);
-    }
-
     private static class TimeFormat {
-        String timeFormat;
-        Long totalTime;
-        Long multiplier;
+        final String unit;
+        final long totalMillis;
+        final long quantity;
 
-        public TimeFormat(String timeFormat, Long totalTime, Long multiplier) {
-            this.timeFormat = timeFormat;
-            this.totalTime = totalTime;
-            this.multiplier = multiplier;
+        TimeFormat(String unit, long totalMillis, long quantity) {
+            this.unit = unit;
+            this.totalMillis = totalMillis;
+            this.quantity = quantity;
         }
     }
 
-    private static enum TimeFrame {
-        s(1000l, "seconds"), m(60000l, "minutes"), h(3600000l, "hours"), d(
-            86400000l, "days"
+    private enum TimeFrame {
+        s(1_000, "seconds"), m(60_000, "minutes"), h(3_600_000, "hours"), d(
+            86_400_000, "days"
         ), w(
-            604800000l,
-            "weeks"
-        ), mo(2629746000l, "months"), y(31556952000l, "years");
+            604_800_000, "weeks"
+        ), mo(2_629_746_000L, "months"), y(31_556_952_000L, "years");
 
-        private final Long totalTime;
-        private final String timeFormat;
+        final long millis;
+        final String label;
 
-        private TimeFrame(Long totalTime, String timeFormat) {
-            this.totalTime = totalTime;
-            this.timeFormat = timeFormat;
+        TimeFrame(long millis, String label) {
+            this.millis = millis;
+            this.label = label;
         }
     }
 
-    private static TimeFormat parseDate(String input) throws Exception {
-        String[] groups = input.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
-        Long multiplier = Long.parseLong(groups[0]);
-        String timeString = groups[1];
+    private static TimeFormat parseDate(String input) {
+        String[] parts = input.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
+        long quantity = Long.parseLong(parts[0]);
+        TimeFrame tf = TimeFrame.valueOf(parts[1]);
 
-        TimeFrame timeFrame = TimeFrame.valueOf(timeString);
-
-        Long totalTime = timeFrame.totalTime * multiplier;
-        String timeFormat = (String) timeFrame.timeFormat;
-
-        return new TimeFormat(timeFormat, totalTime, multiplier);
+        return new TimeFormat(tf.label, tf.millis * quantity, quantity);
     }
-
 }
