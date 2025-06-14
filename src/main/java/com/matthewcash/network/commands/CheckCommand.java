@@ -3,6 +3,7 @@ package com.matthewcash.network.commands;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -46,7 +47,7 @@ public class CheckCommand implements SimpleCommand {
             source.sendMessage(
                 MiniMessage.miniMessage()
                     .deserialize(
-                        "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player!</red>"
+                        "<dark_red><bold>ERROR</bold></dark_red> <red>You must specify a player or IP address!</red>"
                     )
             );
             return;
@@ -54,37 +55,35 @@ public class CheckCommand implements SimpleCommand {
 
         NetworkBans.proxy.getScheduler().buildTask(NetworkBans.plugin, () -> {
             String ipAddress = null;
-            PlayerData playerData;
-            try {
-                playerData = PlayerData.getPlayer(args[0]);
-            } catch (InterruptedException e) {
-                source.sendMessage(
-                    MiniMessage.miniMessage()
-                        .deserialize(
-                            "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to lookup UUID for <player>!</red>",
-                            Placeholder.unparsed("player", args[0])
-                        )
-                );
-                e.printStackTrace();
-                return;
-            }
+            PlayerData playerData = null;
 
-            if (playerData != null) {
-                Optional<Player> proxiedPlayer = NetworkBans.proxy
-                    .getPlayer(args[0]);
-                if (proxiedPlayer.isPresent()) {
-                    ipAddress = IpBanManager
-                        .getIpFromPlayer(proxiedPlayer.get());
-                }
-            } else {
+            if (IpBanManager.isValidIpAddress(args[0])) {
                 ipAddress = args[0];
-            }
+            } else {
+                try {
+                    playerData = PlayerData.getPlayer(args[0]);
 
-            if (
-                ipAddress != null
-                    && !IpBanManager.isValidIpAddress(ipAddress)
-            ) {
-                ipAddress = null;
+                    if (playerData != null) {
+                        Optional<Player> proxiedPlayer = NetworkBans.proxy
+                            .getPlayer(args[0]);
+                        if (proxiedPlayer.isPresent()) {
+                            ipAddress = IpBanManager
+                                .getIpFromPlayer(proxiedPlayer.get());
+                        }
+                    }
+                } catch (
+                    InterruptedException | IOException | ParseException e
+                ) {
+                    source.sendMessage(
+                        MiniMessage.miniMessage()
+                            .deserialize(
+                                "<dark_red><bold>ERROR</bold></dark_red> <red>Failed to lookup UUID for <player>!</red>",
+                                Placeholder.unparsed("player", args[0])
+                            )
+                    );
+                    e.printStackTrace();
+                    return;
+                }
             }
 
             if (playerData == null && ipAddress == null) {
@@ -196,6 +195,5 @@ public class CheckCommand implements SimpleCommand {
             }
         })
             .schedule();
-
     }
 }

@@ -1,6 +1,8 @@
 package com.matthewcash.network.commands;
 
+import java.io.IOException;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,7 +51,7 @@ public class UnbanCommand implements SimpleCommand {
             PlayerData playerData;
             try {
                 playerData = PlayerData.getPlayer(args[0]);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | IOException | ParseException e) {
                 source.sendMessage(
                     MiniMessage.miniMessage()
                         .deserialize(

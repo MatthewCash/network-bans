@@ -1,6 +1,8 @@
 package com.matthewcash.network;
 
+import java.io.IOException;
 import java.sql.SQLException;
+import java.text.ParseException;
 
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
@@ -13,8 +15,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 public class SwitchEvent {
     @Subscribe(order = PostOrder.LAST)
-    public void onServerPreConnect(ServerPreConnectEvent event)
-        throws InterruptedException {
+    public void onServerPreConnect(ServerPreConnectEvent event) {
         Player player = event.getPlayer();
 
         RegisteredServer server = event.getResult().getServer().get();
@@ -25,7 +26,13 @@ public class SwitchEvent {
             return;
         }
 
-        PlayerData playerData = PlayerData.getPlayer(player.getUsername());
+        PlayerData playerData;
+        try {
+            playerData = PlayerData.getPlayer(player.getUsername());
+        } catch (InterruptedException | IOException | ParseException e) {
+            e.printStackTrace();
+            return;
+        }
 
         // Check if player is banned
         Ban ban = null;
@@ -62,5 +69,4 @@ public class SwitchEvent {
                 )
         );
     }
-
 }

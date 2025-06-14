@@ -1,6 +1,8 @@
 package com.matthewcash.network.commands;
 
+import java.io.IOException;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,7 +54,7 @@ public class BanCommand implements SimpleCommand {
             PlayerData playerData;
             try {
                 playerData = PlayerData.getPlayer(args[0]);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | IOException | ParseException e) {
                 source.sendMessage(
                     MiniMessage.miniMessage()
                         .deserialize(
